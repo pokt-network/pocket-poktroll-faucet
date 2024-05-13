@@ -47,22 +47,22 @@ export default {
             tx: {
                 amount: [
                     {
-                        denom: "ukent",
-                        amount: "1000000000"
-                    },
-                    {
-                        denom: "uatom",
+                        denom: "upokt",
                         amount: "10000000000"
                     },
+                    // {
+                    //     denom: "uatom",
+                    //     amount: "10000000000"
+                    // },
                 ],
                 fee: {
                     amount: [
                         {
-                            amount: "5000",
-                            denom: "ukent"
+                            amount: "0",
+                            denom: "upokt"
                         }
                     ],
-                    gas: "200000"
+                    gas: "0"
                 },
             },
             limit: {
