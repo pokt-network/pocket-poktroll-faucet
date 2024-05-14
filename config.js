@@ -14,9 +14,6 @@ if (!fs.existsSync(mnemonic_path)) {
 }
 
 const mnemonic = fs.readFileSync(mnemonic_path, 'utf8')
-console.log("======================== faucet mnemonic =========================")
-console.log(mnemonic)
-console.log("==================================================================")
 
 export default {
     port: 8088, // http port 
@@ -31,7 +28,7 @@ export default {
     },
     blockchains: [
         {
-            name: "rigi-kent",
+            name: "poktroll",
             endpoint: {
                 // make sure that CORS is enabled in rpc section in config.toml
                 // cors_allowed_origins = ["*"]
