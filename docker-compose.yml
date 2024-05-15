@@ -1,0 +1,7 @@
+services:
+  pocket-poktroll-faucet:
+    image: stakenodes/poktroll-faucet:latest
+    container_name: poktroll-faucet
+    restart: unless-stopped
+    ports:
+      - 8088:8088
