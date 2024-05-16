@@ -47,10 +47,6 @@ export default {
                         denom: "upokt",
                         amount: "10000000000"
                     },
-                    // {
-                    //     denom: "uatom",
-                    //     amount: "10000000000"
-                    // },
                 ],
                 fee: {
                     amount: [
@@ -59,7 +55,7 @@ export default {
                             denom: "upokt"
                         }
                     ],
-                    gas: "0"
+                    gas: "0upokt"
                 },
             },
             limit: {
