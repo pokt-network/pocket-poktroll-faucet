@@ -93,3 +93,4 @@ Your donation will help us make better products. Thanks in advance.
  
  
  
+For adding your own mnemonic, create a ```.env``` file and add ```mnemonic="ENTER YOUR MNEMONIC HERE"```
