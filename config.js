@@ -3,7 +3,10 @@ import { stringToPath } from '@cosmjs/crypto'
 import fs from 'fs'
 // import { ethers } from 'ethers'
 import { Wallet, utils } from 'ethers';
+import dotenv from 'dotenv';
+dotenv.config();
 
+var mnemonic = process.env.mnemonic
 const HOME = ".faucet";
 const mnemonic_path= `${HOME}/mnemonic.txt`
 if (!fs.existsSync(mnemonic_path)) {
@@ -12,8 +15,8 @@ if (!fs.existsSync(mnemonic_path)) {
         utils.entropyToMnemonic(utils.randomBytes(32))
       ).mnemonic.phrase)
 }
-
-const mnemonic = fs.readFileSync(mnemonic_path, 'utf8')
+if(!process.env.mnemonic)
+    mnemonic = fs.readFileSync(mnemonic_path, 'utf8')
 
 export default {
     port: 8088, // http port 
