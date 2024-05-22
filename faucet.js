@@ -41,6 +41,7 @@ app.get('/config.json', async (req, res) => {
   const project = conf.project
   project.sample = sample
   project.blockchains = conf.blockchains.map(x => x.name)
+  project.txAmount = conf.blockchains[0].tx?.amount[0]?.amount
   res.send(project);
 })
 
