@@ -6,7 +6,13 @@ import { Wallet, utils } from 'ethers';
 import dotenv from 'dotenv';
 dotenv.config();
 
-var mnemonic = process.env.mnemonic
+// Load environment variables from process.env with defaults if not set
+var mnemonic = process.env.mnemonic;
+var rpcEndpoint = process.env.rpcEndpoint || "https://testnet-validated-validator-rpc.poktroll.com";
+var txAmount = process.env.txAmount || 10000000;
+var txFeeAmount = process.env.txFeeAmount || 10000;
+var txGasLimit = process.env.txGasLimit || 100000;
+
 const HOME = ".faucet";
 const mnemonic_path= `${HOME}/mnemonic.txt`
 if (!fs.existsSync(mnemonic_path)) {
@@ -35,7 +41,7 @@ export default {
             endpoint: {
                 // make sure that CORS is enabled in rpc section in config.toml
                 // cors_allowed_origins = ["*"]
-                rpc_endpoint: "https://testnet-validated-validator-rpc.poktroll.com",
+                rpc_endpoint: rpcEndpoint,
             },
             sender: {
                 mnemonic,
@@ -48,12 +54,12 @@ export default {
                 amount: [
                     {
                         denom: "upokt",
-                        amount: "20000"
+                        amount: txAmount
                     },
                 ],
                 fee: {
                     amount: [],
-                    gas: "100000"
+                    gas: txGasLimit
                 },
             },
             limit: {
