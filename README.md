@@ -1,96 +1,159 @@
-# faucet
+<div align="center">
+  <a href="https://www.pokt.network">
+    <img src=".github/faucet_image.png" alt="Shannon Testnet Faucet Image" width="850"/>
+  </a>
+  <h1>Shannon Testnet Faucet</h1>
+</div>
 
-General Faucet for Cosmos SDK testnet. There are two versions: [Cosmos](https://github.com/ping.pub/faucet) and [Evmos](https://github.com/ping-pub/faucet/tree/evmos)
+The Testnet Faucet is a web tool that allows users to obtain POKT for free on our test platform. Users simply need to provide their address to instantly receive uPOKT..
 
-<img width="1052" alt="preview" src="https://user-images.githubusercontent.com/2882920/202998797-b793c52b-9ad7-47fe-a80b-a0f75eff6ba1.png">
+## Prerequisites
 
-## Prerequisite
+1. **Docker**: Ensure Docker is installed and running on your system.
+2. **Environment Variables**: An `.env` file with the following **required** variables:
+    - `mnemonic`
+    - `rpcEndpoint`
+    - `txAmount`
+    - `txFeeAmount`
+    - `txGasLimit`
+
+**Note**: Make sure each variable is properly set with appropriate values in the `.env` file.
+
+## Installing Docker and Docker Compose on Ubuntu Operating System
+
+### Step 1: Install Docker
+
+1. **Update the package database**:
+    ```sh
+    sudo apt-get update
+    ```
+
+2. **Install the necessary packages**:
+    ```sh
+    sudo apt-get install \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+    ```
+
+3. **Add Docker’s official GPG key**:
+    ```sh
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    ```
+
+4. **Set up the stable repository**:
+    ```sh
+    echo \
+  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    ```
+
+5. **Update the package database again**:
+    ```sh
+    sudo apt-get update
+    ```
+
+6. **Install Docker Engine**:
+    ```sh
+    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+    ```
+
+7. **Verify that Docker Engine is installed correctly**:
+    ```sh
+    sudo docker run hello-world
+    ```
+
+### Step 2: Install Docker Compose
+
+1. **Download the current stable release of Docker Compose**:
+    ```sh
+    sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    ```
+
+2. **Apply executable permissions to the binary**:
+    ```sh
+    sudo chmod +x /usr/local/bin/docker-compose
+    ```
+
+3. **Verify the installation**:
+    ```sh
+    docker-compose --version
+    ```
+
+### Step 3: Run Docker as a Non-Root User
+
+1. **Create the `docker` group** (if it doesn't already exist):
+    ```sh
+    sudo groupadd docker
+    ```
+
+2. **Add your user to the `docker` group**:
+    ```sh
+    sudo usermod -aG docker $USER
+    ```
+
+3. **Log out and log back in so that your group membership is re-evaluated**.
+
+4. **Verify that you can run `docker` commands without `sudo`**:
+    ```sh
+    docker run hello-world
+    ```
+
+Now, Docker and Docker Compose should be installed and ready to use on your system.
+
+
+## Clone the Repository
 
 ```sh
-node -v
-v16.15.0
+git clone https://github.com/pokt-network/pocket-poktroll-faucet.git
+cd pocket-poktroll-faucet
 ```
 
-# Installation
+## Copy .env.example to .env
 
- - clone code:
- 
- ```sh
- git clone https://github.com/ping-pub/faucet.git
- ```
- 
- - setup configs, you have to change everything you need in `./config.js`
- ```js
- {
-    "port": 80,  // http port 
-    "db": {
-        "path": "~/.faucet.db" // db for frequency checker(WIP)
-    }, 
-    "blockchain": {
-        "rpc_endpoint": "https://rpc.sentry-02.theta-testnet.polypore.xyz"
-    },
-    "sender": {
-        "mnemonic": "surround miss nominee dream gap cross assault thank captain prosper drop duty group candy wealth weather scale put",
-        "option": {
-            "hdPaths": ["m/44'/118'/0'/0/0"],
-            "prefix": "cosmos"  //address prefix
-        }
-    },
-    "tx": {
-        "amount": {
-            "denom": "uatom",
-            "amount": "10000" // how many does tx send for each request.
-          },
-        "fee": {
-            "amount": [
-                {
-                  "amount": "1000",
-                  "denom":  "uatom"
-                }
-            ],
-            "gas": "200000"
-        },
-        "frequency_in_24h": "1"
-    },
-    "project": {
-        "testnet": "Ping Testnet", // What ever you want, recommend: chain-id, 
-        "logo": "https://ping.pub/logo.svg",
-        "deployer": ""
-    },
-    // request limitation
-    limit: {
-        // how many times each wallet address is allowed in a window(24h)
-        address: 1, 
-        // how many times each ip is allowed in a window(24h),
-        // if you use proxy, double check if the req.ip returns client's ip.
-        ip: 10 
-    }
-}
- ```
- 
- - Run faucet
- ```sh
- node --es-module-specifier-resolution=node faucet.js
- ```
- 
- # Test
- 
- visit http://localhost:80 
- 
- 80 is default, you can edit it in the config.json
- 
- # Donation
+Make a copy of `.env.example` named `.env`.
 
-Your donation will help us make better products. Thanks in advance.
-
- - Address for ERC20: USDC, USDT, ETH
-```
-0x88BFec573Dd3E4b7d2E6BfD4D0D6B11F843F8aa1
+```sh
+cp .env.example .env
 ```
 
- - You can donate any token in the Cosmos ecosystem: [here](https://ping.pub/coffee)
- 
- 
- 
- 
-For adding your own mnemonic, create a ```.env``` file and add ```mnemonic="ENTER YOUR MNEMONIC HERE"```
+Open `.env` with your editor of choice to modify the file if necessary.
+
+
+## Operating the Node
+
+### Start
+
+```sh
+docker-compose up -d --build
+```
+
+### View logs
+
+```sh
+docker-compose logs -f --tail 10
+```
+
+### Stop
+
+```sh
+docker-compose down
+```
+
+### Restart
+
+```sh
+docker-compose restart
+```
+
+### Upgrade
+
+Pull the latest updates from GitHub, and rebuild the container.
+
+```sh
+git pull
+docker-compose up -d --build --force-recreate
+```
+
