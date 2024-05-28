@@ -92,7 +92,7 @@
               <span id="button-loading" class="spinner-border spinner-border-sm mt-1 mr-1" style="display:none"
                 role="status" aria-hidden="true"></span>
             </span>
-            <span class="sr-only">Send {{ this.txAmount}} uPOKT</span>
+            <span class="sr-only">Send {{ this.txAmount}} POKT</span>
           </button>
         </div>
         
@@ -151,7 +151,7 @@
             },
             {
               "question": "How does the faucet work?",
-              "answer": `Enter your Pocket Network wallet address in the designated textbox field and click 'Send 20000 uPOKT'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`,
+              "answer": `Enter your Pocket Network wallet address in the designated textbox field and click 'Send 10 POKT'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`,
               "id": "flush-headingTwo",
               "id2": "flush-collapseTwo",
             },
@@ -192,9 +192,8 @@
         fetch("/config.json").then(response => response.json()).then(data => {
           this.conf = data
           this.chain = data.blockchains[0]
-          console.log(data.txAmount)
           this.txAmount = data.txAmount
-          this.FAQs[1].answer = `Enter your Pocket Network wallet address in the designated textbox field and click 'Send ${this.txAmount} uPOKT'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`
+          this.FAQs[1].answer = `Enter your Pocket Network wallet address in the designated textbox field and click 'Send ${this.txAmount} POKT'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`
           // this.placeholder = `Input an address (e.g.: ${data.sample[this.chain]}) to received tokens`
           this.onChange();
         });
