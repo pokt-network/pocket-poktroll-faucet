@@ -89,13 +89,13 @@
             style="padding: 5px 20px; background-color: #698DFF; border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
             @click="requestToken(this)">
             <span>
-              <span id="button-loading" class="spinner-border spinner-border-sm mt-1 mr-1" style="display:none"
+              <span id="button-loading" class="spinner-border spinner-border-sm mt-1 mr-1" style="display:none; margin-right: 5px"
                 role="status" aria-hidden="true"></span>
             </span>
-            <span class="sr-only">Send {{ this.txAmount}} uPOKT</span>
+            <span class="sr-only">Send {{ this.txAmount}} POKT</span>
           </button>
         </div>
-
+        <div id="message" v-html="message"></div>
         <h2 class="col-sm d-flex align-items-center" style="margin-top: 30%;">
           Frequently Asked Questions (FAQs)
         </h2>
@@ -151,7 +151,7 @@
             },
             {
               "question": "How does the faucet work?",
-              "answer": `Enter your Pocket Network wallet address in the designated textbox field and click 'Send 20000 uPOKT'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`,
+              "answer": `Enter your Pocket Network wallet address in the designated textbox field and click 'Send 10 POKT'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`,
               "id": "flush-headingTwo",
               "id2": "flush-collapseTwo",
             },
@@ -198,9 +198,8 @@
         fetch("/config.json").then(response => response.json()).then(data => {
           this.conf = data
           this.chain = data.blockchains[0]
-          console.log(data.txAmount)
           this.txAmount = data.txAmount
-          this.FAQs[1].answer = `Enter your Pocket Network wallet address in the designated textbox field and click 'Send ${this.txAmount} uPOKT'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`
+          this.FAQs[1].answer = `Enter your Pocket Network wallet address in the designated textbox field and click 'Send ${this.txAmount} POKT'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`
           // this.placeholder = `Input an address (e.g.: ${data.sample[this.chain]}) to received tokens`
           this.onChange();
         });
@@ -230,7 +229,7 @@
             obj.disabled = true
             document.getElementById("button-loading").style.display = 'block';
 
-            fetch(`/send/${this.chain}/${this.address}`).then(response => response.json()).then(data => {
+           fetch(`/send/${this.chain}/${this.address}`).then(response => response.json()).then(data => {
               // button state
               obj.disabled = false
               document.getElementById("button-loading").style.display = 'none';
@@ -238,14 +237,16 @@
               this.message = `
                   <div class="alert alert-${data.result.code === 0 ? 'success' : 'danger'} alert-dismissible show fade mt-2" role="alert">
                       <li>${data.result.code === 0 ? 'Token sent' : 'Request failed'}</li>
-                      <textarea class="form-control mt-1" rows="5" style="background-color:transparent">${JSON.stringify(data, null, 2)}</textarea>
+                      <textarea class="form-control mt-1" rows="5" style="background-color:transparent">${JSON.stringify(data.result.includes('Length must be') ? {err:'Invalid Address'} : data, null, 2)}</textarea>
                       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                   </div>
                   `
-            });
+           });
           } else {
+            obj.disabled = false
             this.message = '<span class="text-danger">Address is required</span>'
           }
+          obj.disabled = false
         }
       }
     }).mount('#app')
