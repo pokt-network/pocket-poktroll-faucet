@@ -81,36 +81,44 @@ app.get('/balance/:chain', async (req, res) => {
 
 app.get('/send/:chain/:address', async (req, res) => {
   const {chain, address} = req.params;
-  const ip = req.headers['cf-connecting-ip'] || req.headers['x-real-ip'] || req.headers['X-Forwarded-For'] || req.ip
-  console.log('request tokens to ', address, ip)
-  if (chain || address ) {
-    try {
-      const chainConf = conf.blockchains.find(x => x.name === chain)
-      if (chainConf && (address.startsWith(chainConf.sender.option.prefix) || address.startsWith('0x'))) {
-        if( await checker.checkAddress(address, chain) && await checker.checkIp(`${chain}${ip}`, chain) ) {
-          checker.update(`${chain}${ip}`) // get ::1 on localhost
-          console.log('send tokens to ', address)
-          sendTx(address, chain).then(ret => {
+  const ip = req.headers['cf-connecting-ip'] || req.headers['x-real-ip'] || req.headers['X-Forwarded-For'] || req.ip;
+  console.log('request tokens to ', address, ip);
 
-            checker.update(address)
-            res.send({ result: ret })
-          }).catch(err => {
-            res.send({ result: `err: ${err}`})
-          });
-        }else {
-          res.send({ result: "You requested too often" })
-        }
-      } else {
-        res.send({ result: `Address [${address}] is not supported.` })
-      }
-    } catch (err) {
-      console.error(err);
-      res.send({ result: 'Failed, Please contact to admin.' })
+  if (!chain || !address) {
+    return res.send({ result: 'chain and address are required' });
+  }
+
+  try {
+    const chainConf = conf.blockchains.find(x => x.name === chain);
+    if (!chainConf || !(address.startsWith(chainConf.sender.option.prefix) || address.startsWith('0x'))) {
+      return res.send({ result: `Address [${address}] is not supported.` });
     }
 
-  } else {
-    // send result
-    res.send({ result: 'address is required' });
+    const addressCheck = checker.checkAddress(address, chain);
+    const ipCheck = checker.checkIp(`${chain}${ip}`, chain);
+
+    const [addressResult, ipResult] = await Promise.all([addressCheck, ipCheck]);
+
+    console.log('Checking address:', addressResult);
+    console.log('Checking IP:', ipResult);
+
+    if (addressResult && ipResult) {
+      await checker.update(`${chain}${ip}`); // get ::1 on localhost
+      console.log('send tokens to ', address);
+      
+      try {
+        const ret = await sendTx(address, chain);
+        await checker.update(address);
+        res.send({ result: ret });
+      } catch (err) {
+        res.send({ result: `err: ${err}` });
+      }
+    } else {
+      res.send({ result: "You requested too often" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.send({ result: 'Failed, Please contact admin.' });
   }
 })
 
