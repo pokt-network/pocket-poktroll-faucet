@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/ping-pub/faucet#readme",
   "dependencies": {
-    "@cosmjs/crypto": "^0.31",
+    "@cosmjs/crypto": "^0.32.4",
     "@cosmjs/encoding": "0.31.0",
     "@cosmjs/proto-signing": "^0.31",
     "@cosmjs/stargate": "^0.31",
