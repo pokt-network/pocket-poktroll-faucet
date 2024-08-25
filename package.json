@@ -27,8 +27,8 @@
   "dependencies": {
     "@cosmjs/crypto": "^0.32.4",
     "@cosmjs/encoding": "0.32.4",
-    "@cosmjs/proto-signing": "^0.32",
-    "@cosmjs/stargate": "^0.32",
+    "@cosmjs/proto-signing": "^0.32.4",
+    "@cosmjs/stargate": "^0.32.4",
     "@ethersproject/wallet": "^5.7.0",
     "@hanchon/evmos-ts-wallet": "^0.2.0",
     "@tharsis/transactions": "^0.2.6",
