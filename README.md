@@ -11,11 +11,16 @@ The Testnet Faucet is a web tool that allows users to obtain POKT for free on ou
 
 1. **Docker**: Ensure Docker is installed and running on your system.
 2. **Environment Variables**: An `.env` file with the following **required** variables:
-   - `mnemonic`
-   - `rpcEndpoint`
-   - `txAmount`
-   - `txFeeAmount`
-   - `txGasLimit`
+   - `mnemonic:` Mnemonic phrase for the wallet
+   - `chainId:` The chain ID of the Pocket Network
+   - `rpcEndpoint:` RPC endpoint for transaction broadcasting
+   - `bech32Prefix:` Human-readable address prefix for Pocket Network
+   - `txDenom:` Denomination used for transactions (smallest unit)
+   - `txAmount:` Transaction amount in smallest denomination (upokt)
+   - `txFeeAmount:` Gas price per unit in upokt. Leave empty for alpha.
+   - `txGasLimit:` Gas limit for the transaction
+   - `limitAddress:` Maximum allowed transactions per wallet address in 24h
+   - `limitIp:` Maximum allowed transactions per IP address in 24h
 
 **Note**: Make sure each variable is properly set with appropriate values in the `.env` file.
 
@@ -121,13 +126,20 @@ git clone https://github.com/pokt-network/pocket-poktroll-faucet.git
 cd pocket-poktroll-faucet
 ```
 
-## Copy .env.example to .env
+## Copy the appropriate example configuration file to .env based on the environment you want to deploy:
 
-Make a copy of `.env.example` named `.env`.
+For **Alpha environment**:
 
 ```sh
-cp .env.example .env
+cp .env.example.alpha .env
 ```
+For **Beta environment**:
+
+```sh
+cp .env.example.beta .env
+```
+
+After copying, open the `.env` file and replace the placeholder values with your actual environment-specific configurations, such as `mnemonic`, `rpcEndpoint`, `txAmount`, and other required variables.
 
 Open `.env` with your editor of choice to modify the file if necessary.
 
