@@ -1,28 +1,34 @@
-
 import { stringToPath } from '@cosmjs/crypto'
 import fs from 'fs'
-// import { ethers } from 'ethers'
 import { Wallet, utils } from 'ethers';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Load environment variables from process.env with defaults if not set
+// Load environment variables from .env
 var mnemonic = process.env.mnemonic;
-var rpcEndpoint = process.env.rpcEndpoint || "https://testnet-validated-validator-rpc.poktroll.com";
-var txAmount = process.env.txAmount || 10000000;
-var txFeeAmount = process.env.txFeeAmount || 10000;
-var txGasLimit = process.env.txGasLimit || 100000;
+var chainId = process.env.chainId;
+var rpcEndpoint = process.env.rpcEndpoint;
+var bech32Prefix = process.env.bech32Prefix;
+var txDenom = process.env.txDenom;
+var txAmount = process.env.txAmount;
+var txFeeAmount = process.env.txFeeAmount;
+var txGasLimit = process.env.txGasLimit;
+var limitAddress = process.env.limitAddress;
+var limitIp = process.env.limitIp;
 
 const HOME = ".faucet";
-const mnemonic_path= `${HOME}/mnemonic.txt`
+const mnemonic_path = `${HOME}/mnemonic.txt`;
+
 if (!fs.existsSync(mnemonic_path)) {
-    fs.mkdirSync(HOME, { recursive: true })
+    fs.mkdirSync(HOME, { recursive: true });
     fs.writeFileSync(mnemonic_path, Wallet.fromMnemonic(
         utils.entropyToMnemonic(utils.randomBytes(32))
-      ).mnemonic.phrase)
+    ).mnemonic.phrase);
 }
-if(!process.env.mnemonic)
-    mnemonic = fs.readFileSync(mnemonic_path, 'utf8')
+
+if (!process.env.mnemonic) {
+    mnemonic = fs.readFileSync(mnemonic_path, 'utf8');
+}
 
 export default {
     port: 8088, // http port 
@@ -37,37 +43,37 @@ export default {
     },
     blockchains: [
         {
-            name: "poktroll",
+            name: chainId,
             endpoint: {
-                // make sure that CORS is enabled in rpc section in config.toml
-                // cors_allowed_origins = ["*"]
                 rpc_endpoint: rpcEndpoint,
+                // Ensure CORS is enabled in the RPC section of config.toml.
+                // Example: cors_allowed_origins = ["*"]
             },
             sender: {
                 mnemonic,
                 option: {
                     hdPaths: [stringToPath("m/44'/118'/0'/0/0")],
-                    prefix: "pokt" // human readable address prefix
+                    prefix: bech32Prefix // human readable address prefix
                 }
             },
             tx: {
                 amount: [
                     {
-                        denom: "upokt",
+                        denom: txDenom,
                         amount: txAmount
                     },
                 ],
-                fee: {
-                    amount: [],
-                    gas: txGasLimit
-                },
+                fee: txFeeAmount ? [
+                    {
+                        amount: txFeeAmount,
+                        denom: txDenom,
+                    },
+                ] : [],
+                gas: txGasLimit,
             },
             limit: {
-                // how many times each wallet address is allowed in a window(24h)
-                address: 2,
-                // how many times each ip is allowed in a window(24h),
-                // if you use proxy, double check if the req.ip is return client's ip.
-                ip: 10
+                address: limitAddress, // Number of requests per wallet address in 24h
+                ip: limitIp, // Number of requests per IP in 24h
             }
         },
     ]
