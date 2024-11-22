@@ -42,6 +42,7 @@ app.get('/config.json', async (req, res) => {
   project.sample = sample
   project.blockchains = conf.blockchains.map(x => x.name)
   project.txAmount = conf.blockchains[0].tx?.amount[0]?.amount / 1000000
+  project.isBeta = process.env.chainId == "pocket-beta"
   res.send(project);
 })
 
