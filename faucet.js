@@ -109,7 +109,7 @@ app.get('/send/:chain/:address', async (req, res) => {
       
       try {
         const ret = await sendTx(address, chain);
-        await checker.update(address.toString());
+        checker.update(address.toString());
         res.send({ result: ret });
       } catch (err) {
         res.send({ result: `err: ${err}` });
