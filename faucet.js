@@ -109,6 +109,7 @@ app.get('/send/:chain/:address', async (req, res) => {
       
       try {
         const ret = await sendTx(address, chain);
+        console.log("xxl ret : ",ret);
         checker.update(address.toString());
         res.send({ result: ret });
       } catch (err) {
@@ -166,15 +167,11 @@ async function sendCosmosTx(recipient, chain) {
         fee
       );
 
-      console.log("xxl result : ",result);
-
       // Return a cleaned up response
       return {
         code: 0,
         height: result.height,
         txhash: result.transactionHash,
-        gasUsed: result.gasUsed,
-        gasWanted: result.gasWanted
       };
 
     } catch (error) {
