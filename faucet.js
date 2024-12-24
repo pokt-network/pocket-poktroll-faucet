@@ -109,7 +109,7 @@ app.get('/send/:chain/:address', async (req, res) => {
       
       try {
         const ret = await sendTx(address, chain);
-        await checker.update(address);
+        await checker.update(address.toString());
         res.send({ result: ret });
       } catch (err) {
         res.send({ result: `err: ${err}` });
@@ -137,28 +137,36 @@ async function sendCosmosTx(recipient, chain) {
       const [firstAccount] = await wallet.getAccounts();
       const rpcEndpoint = chainConf.endpoint.rpc_endpoint;
       
+      // Format the amount properly
+      const amount = [{
+        denom: chainConf.tx.amount[0].denom,
+        amount: chainConf.tx.amount[0].amount.toString() // Ensure amount is a string
+      }];
+
+      // Format the fee properly
+      const fee = {
+        amount: chainConf.tx.fee || [{
+          amount: "0",
+          denom: chainConf.tx.amount[0].denom
+        }],
+        gas: chainConf.tx.gas?.toString() || "200000"
+      };
+
       // Create client with proper configuration
       const client = await SigningStargateClient.connectWithSigner(
         rpcEndpoint, 
-        wallet,
-        { 
-          gasPrice: chainConf.tx.fee?.[0]?.amount 
-            ? `${chainConf.tx.fee[0].amount}${chainConf.tx.fee[0].denom}`
-            : undefined
-        }
+        wallet
       );
-
-      const amount = chainConf.tx.amount;
-      const fee = chainConf.tx.fee;
 
       // Send tokens with proper error handling
       const result = await client.sendTokens(
         firstAccount.address,
         recipient,
         amount,
-        fee,
-        chainConf.tx.memo
+        fee
       );
+
+      console.log("xxl result : ",result);
 
       // Return a cleaned up response
       return {
