@@ -126,26 +126,55 @@ app.get('/send/:chain/:address', async (req, res) => {
 app.listen(conf.port, () => {
   console.log(`Faucet app listening on port ${conf.port}`)
 })
-
 async function sendCosmosTx(recipient, chain) {
-  // const mnemonic = "surround miss nominee dream gap cross assault thank captain prosper drop duty group candy wealth weather scale put";
   const chainConf = conf.blockchains.find(x => x.name === chain) 
   if(chainConf) {
-    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(chainConf.sender.mnemonic, chainConf.sender.option);
-    const [firstAccount] = await wallet.getAccounts();
+    try {
+      const wallet = await DirectSecp256k1HdWallet.fromMnemonic(
+        chainConf.sender.mnemonic, 
+        chainConf.sender.option
+      );
+      const [firstAccount] = await wallet.getAccounts();
+      const rpcEndpoint = chainConf.endpoint.rpc_endpoint;
+      
+      // Create client with proper configuration
+      const client = await SigningStargateClient.connectWithSigner(
+        rpcEndpoint, 
+        wallet,
+        { 
+          gasPrice: chainConf.tx.fee?.[0]?.amount 
+            ? `${chainConf.tx.fee[0].amount}${chainConf.tx.fee[0].denom}`
+            : undefined
+        }
+      );
 
-    // console.log("sender", firstAccount);
+      const amount = chainConf.tx.amount;
+      const fee = chainConf.tx.fee;
 
-    const rpcEndpoint = chainConf.endpoint.rpc_endpoint;
-    const client = await SigningStargateClient.connectWithSigner(rpcEndpoint, wallet);
+      // Send tokens with proper error handling
+      const result = await client.sendTokens(
+        firstAccount.address,
+        recipient,
+        amount,
+        fee,
+        chainConf.tx.memo
+      );
 
-    // const recipient = "cosmos1xv9tklw7d82sezh9haa573wufgy59vmwe6xxe5";
-    const amount = chainConf.tx.amount;
-    const fee = chainConf.tx.fee;
-    console.log("recipient", recipient, amount, fee);
-    return client.sendTokens(firstAccount.address, recipient, amount, fee);
+      // Return a cleaned up response
+      return {
+        code: 0,
+        height: result.height,
+        txhash: result.transactionHash,
+        gasUsed: result.gasUsed,
+        gasWanted: result.gasWanted
+      };
+
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      throw new Error(`Transaction failed: ${error.message}`);
+    }
   }
-  throw new Error(`Blockchain Config [${chain}] not found`)
+  throw new Error(`Blockchain Config [${chain}] not found`);
 }
 
 async function sendEvmosTx(recipient, chain) {
