@@ -278,7 +278,7 @@
                 <div class="alert alert-${alertType} alert-dismissible fade show" role="alert">
                   <strong>${alertMessage}</strong>
                   <div class="mt-2">
-                    ${data.result ? `
+                    ${data.result.txhash ? `
                       <span class="d-block text-primary">Transaction Hash: <code>${data.result.txhash}</code></span>
                       <button class="btn btn-outline-secondary btn-sm mt-1" onclick="copyToClipboard('${data.txhash}')">Copy</button>
                     ` : `
