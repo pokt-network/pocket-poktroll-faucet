@@ -264,13 +264,6 @@
           // })
         },
         requestToken(obj) {
-          function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-              alert('Transaction hash copied to clipboard!');
-            }).catch(err => {
-              console.error('Failed to copy: ', err);
-            });
-          }
           if (this.address) {
             this.isProcessing = true;
             obj.disabled = true;
@@ -311,6 +304,14 @@
     integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
     crossorigin="anonymous"></script>
   <script>
+
+function copyToClipboard(text) {
+                        navigator.clipboard.writeText(text).then(() => {
+                          alert('Transaction hash copied to clipboard!');
+                        }).catch(err => {
+                          console.error('Failed to copy: ', err);
+                        });
+                      }
   </script>
 </body>
 
