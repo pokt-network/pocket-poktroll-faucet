@@ -66,6 +66,18 @@
     text-transform: uppercase;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
   }
+
+  .processing-bar {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+  }
 </style>
 </head>
 
@@ -103,14 +115,24 @@
             class="rounded-right btn btn-primary d-flex flex-row mt-4 col-lg-4 col-md-4 col-xl-4 col-5 align-items-center justify-content-center"
             style="padding: 5px 20px; background-color: #698DFF; border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
             @click="requestToken(this)">
-            <span>
-              <span id="button-loading" class="spinner-border spinner-border-sm mt-1 mr-1"
-                style="display:none; margin-right: 5px" role="status" aria-hidden="true"></span>
-            </span>
-            <span class="sr-only">Send {{ this.txAmount}} POKT</span>
+            <span>Send {{ this.txAmount }} POKT</span>
           </button>
         </div>
-        <div id="message" v-html="message"></div>
+        <div id="processing-bar" class="processing-bar" v-if="isProcessing">
+          <span>We'll notify you shortly. Transaction processing...</span>
+        </div>
+        <!-- Modal for messages -->
+        <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel" style="color: black;">Transaction Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body" v-html="message"></div>
+            </div>
+          </div>
+        </div>
         <h2 class="col-sm d-flex align-items-center" style="margin-top: 30%;">
           Frequently Asked Questions (FAQs)
         </h2>
@@ -207,7 +229,8 @@
               "id": "flush-headingEight",
               "id2": "flush-collapseEight",
             }
-          ]
+          ],
+          isProcessing: false,
         }
       },
       created() {
@@ -242,28 +265,36 @@
         },
         requestToken(obj) {
           if (this.address) {
-            // button state
-            obj.disabled = true
-            document.getElementById("button-loading").style.display = 'block';
+            this.isProcessing = true;
+            obj.disabled = true;
 
             fetch(`/send/${this.chain}/${this.address}`).then(response => response.json()).then(data => {
-              // button state
-              obj.disabled = false
-              document.getElementById("button-loading").style.display = 'none';
-              // show result
+              this.isProcessing = false;
+              obj.disabled = false;
+
+              const alertType = data.result.code === 0 ? 'success' : 'danger';
+              const alertMessage = data.result.code === 0 ? 'Token sent' : 'Request failed';
               this.message = `
-                  <div class="alert alert-${data.result.code === 0 ? 'success' : 'danger'} alert-dismissible show fade mt-2" role="alert">
-                      <li>${data.result.code === 0 ? 'Token sent' : 'Request failed'}</li>
-                      <textarea class="form-control mt-1" rows="5" style="background-color:transparent">${JSON.stringify(data, null, 2)}</textarea>
-                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="alert alert-${alertType} alert-dismissible fade show" role="alert">
+                  <strong>${alertMessage}</strong>
+                  <div class="mt-2">
+                    <span class="d-block text-primary">Transaction Hash: <code>${data.txhash}</code></span>
+                    <button class="btn btn-outline-secondary btn-sm mt-1 ${data.result.txhash ? "" : "hidden"}" onclick="copyToClipboard('${data.txhash}')">Copy</button>
                   </div>
-                  `
+                </div>
+              `;
+              // Show the modal
+              const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+              modal.show();
             });
           } else {
-            obj.disabled = false
-            this.message = '<span class="text-danger">Address is required</span>'
+            obj.disabled = false;
+            this.message = '<span class="text-danger">Address is required</span>';
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+            modal.show();
           }
-          obj.disabled = false
+          obj.disabled = false;
         }
       }
     }).mount('#app')
@@ -273,6 +304,14 @@
     integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
     crossorigin="anonymous"></script>
   <script>
+
+function copyToClipboard(text) {
+                        navigator.clipboard.writeText(text).then(() => {
+                          alert('Transaction hash copied to clipboard!');
+                        }).catch(err => {
+                          console.error('Failed to copy: ', err);
+                        });
+                      }
   </script>
 </body>
 
