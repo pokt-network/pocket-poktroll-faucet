@@ -278,8 +278,12 @@
                 <div class="alert alert-${alertType} alert-dismissible fade show" role="alert">
                   <strong>${alertMessage}</strong>
                   <div class="mt-2">
-                    <span class="d-block text-primary">Transaction Hash: <code>${data.txhash}</code></span>
-                    <button class="btn btn-outline-secondary btn-sm mt-1 ${data.result.txhash ? "" : "hidden"}" onclick="copyToClipboard('${data.txhash}')">Copy</button>
+                    ${data.result ? `
+                      <span class="d-block text-primary">Transaction Hash: <code>${data.result.txhash}</code></span>
+                      <button class="btn btn-outline-secondary btn-sm mt-1" onclick="copyToClipboard('${data.txhash}')">Copy</button>
+                    ` : `
+                      <textarea class="form-control mt-1" rows="5" style="background-color:transparent">${JSON.stringify(data, null, 2)}</textarea>
+                    `}
                   </div>
                 </div>
               `;
