@@ -159,10 +159,23 @@
       <!-- FAQs -->
 
     </main>
-
-
   </div>
+  
+  <!-- footer -->
+  <footer style="background-color: #231f20; text-align: center; padding: 15px 0; width: 100%; position: sticky; bottom: 0; z-index: 100; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);">
+    <div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap;">
+      &copy; <span id="currentYear"></span> Pocket Network. All rights reserved. Powered by 
+      <a href="https://stakenodes.org" target="_blank" style="display: flex; align-items: center; margin-left: 5px;">
+        <img src="https://stakenodes.org/favicon.png" alt="Stakenodes" style="height: 24px; margin: 0 5px;">
+        <span>Stakenodes</span>
+      </a>
+    </div>
+  </footer>
+
   <script type="module">
+    // Set current year for footer
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    
     import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
 
     createApp({
