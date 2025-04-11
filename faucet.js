@@ -13,6 +13,9 @@ import { SigningStargateClient } from "@cosmjs/stargate";
 import conf from './config.js'
 import { FrequencyChecker } from './checker.js';
 
+// Add node-fetch for RPC health checks
+import fetch from 'node-fetch';
+
 // load config
 console.log("loaded config: ", conf)
 
@@ -124,9 +127,55 @@ app.get('/send/:chain/:address', async (req, res) => {
   }
 })
 
-app.listen(conf.port, () => {
-  console.log(`Faucet app listening on port ${conf.port}`)
-})
+// Add a function to check RPC endpoint health
+async function checkRpcHealth(endpoint) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'health',
+        params: []
+      }),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      console.warn(`RPC endpoint returned status ${response.status}`);
+      return false;
+    }
+    
+    const data = await response.json();
+    return true;
+  } catch (error) {
+    console.error(`RPC health check failed: ${error.message}`);
+    return false;
+  }
+}
+
+// Add RPC health check to app startup
+app.listen(conf.port, async () => {
+  console.log(`Faucet app listening on port ${conf.port}`);
+  
+  // Check RPC endpoints health on startup
+  for (const chainConf of conf.blockchains) {
+    const isHealthy = await checkRpcHealth(chainConf.endpoint.rpc_endpoint);
+    console.log(`RPC endpoint for ${chainConf.name}: ${isHealthy ? 'HEALTHY' : 'UNHEALTHY'}`);
+    
+    if (!isHealthy) {
+      console.warn(`Warning: RPC endpoint for ${chainConf.name} appears to be unreachable.`);
+      console.warn(`Please check your network connection or try an alternative endpoint.`);
+    }
+  }
+});
+
 async function sendCosmosTx(recipient, chain) {
   const chainConf = conf.blockchains.find(x => x.name === chain) 
   if(chainConf) {
@@ -137,6 +186,8 @@ async function sendCosmosTx(recipient, chain) {
       );
       const [firstAccount] = await wallet.getAccounts();
       const rpcEndpoint = chainConf.endpoint.rpc_endpoint;
+      
+      console.log(`Attempting to connect to RPC endpoint: ${rpcEndpoint}`);
       
       // Format the amount properly
       const amount = [{
@@ -153,19 +204,28 @@ async function sendCosmosTx(recipient, chain) {
         gas: chainConf.tx.gas?.toString() || "200000"
       };
 
-      // Create client with proper configuration
+      // Create client with proper configuration and increased timeout
       const client = await SigningStargateClient.connectWithSigner(
         rpcEndpoint, 
-        wallet
+        wallet,
+        { 
+          broadcastTimeoutMs: chainConf.timeout || 500000, // 120 seconds broadcast timeout
+          broadcastPollIntervalMs: 4000, // Poll every 4 seconds instead of default 3s
+        }
       );
+
+      console.log("Successfully connected to RPC endpoint");
 
       // Send tokens with proper error handling
       const result = await client.sendTokens(
         firstAccount.address,
         recipient,
         amount,
-        fee
+        fee,
+        "Faucet token transfer" // Add memo for better traceability
       );
+
+      console.log("Transaction sent successfully:", result.transactionHash);
 
       // Return a cleaned up response
       return {
@@ -176,7 +236,26 @@ async function sendCosmosTx(recipient, chain) {
 
     } catch (error) {
       console.error('Transaction failed:', error);
-      throw new Error(`Transaction failed: ${error.message}`);
+      
+      // More detailed error handling
+      if (error.message && error.message.includes('timeout') && error.txId) {
+        console.log(`Transaction was submitted with ID ${error.txId} but confirmation timed out.`);
+        console.log(`The transaction might still be processed. Check the explorer for tx: ${error.txId}`);
+        
+        // Return partial success since tx was submitted
+        return {
+          code: 1, // Non-zero but not a complete failure
+          status: "PENDING",
+          message: "Transaction was submitted but confirmation timed out. It may still be processed.",
+          txhash: error.txId
+        };
+      } else if (error.message && error.message.includes('timeout')) {
+        throw new Error(`Connection to blockchain node timed out. Please try again later or contact admin if the issue persists.`);
+      } else if (error.message && error.message.includes('failed')) {
+        throw new Error(`Failed to connect to blockchain node. The node may be offline or unreachable.`);
+      } else {
+        throw new Error(`Transaction failed: ${error.message}`);
+      }
     }
   }
   throw new Error(`Blockchain Config [${chain}] not found`);

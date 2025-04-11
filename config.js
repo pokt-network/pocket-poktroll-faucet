@@ -15,6 +15,7 @@ var txFeeAmount = process.env.txFeeAmount;
 var txGasLimit = process.env.txGasLimit;
 var limitAddress = process.env.limitAddress;
 var limitIp = process.env.limitIp;
+var txTimeout = process.env.txTimeout;
 
 const HOME = ".faucet";
 const mnemonic_path = `${HOME}/mnemonic.txt`;
@@ -43,6 +44,7 @@ export default {
     },
     blockchains: [
         {
+            timeout: txTimeout,
             name: chainId,
             endpoint: {
                 rpc_endpoint: rpcEndpoint,

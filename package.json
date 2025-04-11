@@ -39,6 +39,7 @@
     "evmosjs": "0.3.3",
     "express": "^4.18.2",
     "level": "^8.0.0",
+    "node-fetch": "^3.3.2",
     "nodemodule": "^0.3.0"
   }
 }
