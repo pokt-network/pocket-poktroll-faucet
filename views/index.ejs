@@ -115,7 +115,7 @@
             class="rounded-right btn btn-primary d-flex flex-row mt-4 col-lg-4 col-md-4 col-xl-4 col-5 align-items-center justify-content-center"
             style="padding: 5px 20px; background-color: #698DFF; border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
             @click="requestToken(this)">
-            <span>Send {{ this.txAmount }} {{ this.tokenName }}</span>
+            <span>Send {{ this.txAmount }} <%= blockchains[0].tokenName %></span>
           </button>
         </div>
         <div id="processing-bar" class="processing-bar" v-if="isProcessing">
@@ -252,9 +252,8 @@
           this.chain = data.blockchains[0]
           this.txAmount = data.txAmount
           this.isBeta = data.isBeta
-          this.tokenName = data.tokenName
-          this.FAQs[1].answer = `Enter your Pocket Network wallet address in the designated textbox field and click 'Send ${this.txAmount} ${this.tokenName}'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`
-          this.FAQs[3].answer = `Yes, each Pocket Wallet address can request only ${data.limit.address} times per ${data.limit.hours} hours.`
+          this.FAQs[1].answer = `Enter your Pocket Network wallet address in the designated textbox field and click 'Send ${this.txAmount} <%= blockchains[0].tokenName %>'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`
+          this.FAQs[3].answer = `Yes, each Pocket Wallet address can request only <%= blockchains[0].limit.address %> times per <%= blockchains[0].limit.hours %> hours.`
           // this.placeholder = `Input an address (e.g.: ${data.sample[this.chain]}) to received tokens`
           this.onChange();
         });
