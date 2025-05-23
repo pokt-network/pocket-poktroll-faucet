@@ -12,10 +12,13 @@ var bech32Prefix = process.env.bech32Prefix;
 var txDenom = process.env.txDenom;
 var txAmount = process.env.txAmount;
 var txFeeAmount = process.env.txFeeAmount;
+var txFeeDenom = process.env.txFeeDenom;
 var txGasLimit = process.env.txGasLimit;
 var limitAddress = process.env.limitAddress;
 var limitIp = process.env.limitIp;
 var txTimeout = process.env.txTimeout;
+var limitHours = process.env.limitHours;
+var tokenName = process.env.tokenName;
 
 const HOME = ".faucet";
 const mnemonic_path = `${HOME}/mnemonic.txt`;
@@ -46,6 +49,7 @@ export default {
         {
             timeout: txTimeout,
             name: chainId,
+            tokenName: tokenName,
             endpoint: {
                 rpc_endpoint: rpcEndpoint,
                 // Ensure CORS is enabled in the RPC section of config.toml.
@@ -68,7 +72,7 @@ export default {
                 fee: txFeeAmount ? [
                     {
                         amount: txFeeAmount,
-                        denom: txDenom,
+                        denom: txFeeDenom,
                     },
                 ] : [],
                 gas: txGasLimit,
@@ -76,6 +80,7 @@ export default {
             limit: {
                 address: limitAddress, // Number of requests per wallet address in 24h
                 ip: limitIp, // Number of requests per IP in 24h
+                hours: limitHours, // Number of hours
             }
         },
     ]
