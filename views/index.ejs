@@ -247,7 +247,7 @@
         }
       },
       created() {
-        fetch("/config.json").then(response => response.json()).then(data => {
+        fetch("config.json").then(response => response.json()).then(data => {
           this.conf = data
           this.chain = data.blockchains[0]
           this.txAmount = data.txAmount
@@ -281,7 +281,7 @@
             this.isProcessing = true;
             obj.disabled = true;
 
-            fetch(`/send/${this.chain}/${this.address}`).then(response => response.json()).then(data => {
+            fetch(`send/${this.chain}/${this.address}`).then(response => response.json()).then(data => {
               this.isProcessing = false;
               obj.disabled = false;
 
