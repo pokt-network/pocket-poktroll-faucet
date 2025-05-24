@@ -253,8 +253,9 @@
           this.txAmount = data.txAmount
           this.isBeta = data.isBeta
           this.denom = '<%= blockchains[0].tokenName %>'
+          this.limitHours = '<%= blockchains[0].limit.hours %>'
           this.FAQs[1].answer = `Enter your Pocket Network wallet address in the designated textbox field and click 'Send ${this.denom == 'POKT' ? this.txAmount: '<%= blockchains[0].tx.amount[0].amount %>'} <%= blockchains[0].tokenName %>'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`
-          this.FAQs[3].answer = `Yes, each Pocket Wallet address can request only <%= blockchains[0].limit.address %> times per <%= blockchains[0].limit.hours %> hours.`
+          this.FAQs[3].answer = this.limitHours / (365 * 24) >= 1 ? `Yes, each Pocket Wallet address can request only once` : `Yes, each Pocket Wallet address can request only <%= blockchains[0].limit.address %> times per <%= blockchains[0].limit.hours %> hours.`
           // this.placeholder = `Input an address (e.g.: ${data.sample[this.chain]}) to received tokens`
           this.onChange();
         });
