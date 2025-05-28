@@ -19,6 +19,7 @@ var limitIp = process.env.limitIp;
 var txTimeout = process.env.txTimeout;
 var limitHours = process.env.limitHours;
 var tokenName = process.env.tokenName;
+var chainType = process.env.chainType;
 
 const HOME = ".faucet";
 const mnemonic_path = `${HOME}/mnemonic.txt`;
@@ -49,6 +50,7 @@ export default {
         {
             timeout: txTimeout,
             name: chainId,
+            chainType,
             tokenName: tokenName,
             endpoint: {
                 rpc_endpoint: rpcEndpoint,

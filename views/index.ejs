@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Faucet for Shannon</title>
+  <title>Faucet - Pocket Network</title>
   <meta name=”robots” content="index, follow">
   <meta name="description" content="Uniform Faucet Tool For Poktroll">
   <link rel="icon"
@@ -102,11 +102,10 @@
         </div>
         <p class="col-sm align-items-center d-flex text-start"
           style="margin-top: 25%; font-size: 54px; font-weight: bold; line-height:normal;">
-          SHANNON TESTNET<br>FAUCET
+          POCKET <%= blockchains[0].chainType %><br>FAUCET
         </p>
         <p class="col-sm align-items-center d-flex text-start" style="font-size: 20px;">
-          Get free uPOKT delivered to your wallet effortlessly<br>
-          for a smooth and productive development.
+          Get a free MACT token to initialize your Shannon account and start your journey on the network
         </p>
         <div class="d-flex flex-row col-12">
           <input id="address" class="rounded-left input-control mt-4 col-lg-8 col-md-8 col-xl-8 col-7 p-2"
@@ -250,6 +249,7 @@
         fetch("config.json").then(response => response.json()).then(data => {
           this.conf = data
           this.chain = data.blockchains[0]
+          this.chainType = data.chainType
           this.txAmount = data.txAmount
           this.isBeta = data.isBeta
           this.denom = '<%= blockchains[0].tokenName %>'
