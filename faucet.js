@@ -100,14 +100,20 @@ app.get('/send/:chain/:address', async (req, res) => {
     }
 
     const addressCheck = checker.checkAddress(address, chain);
-    const ipCheck = checker.checkIp(`${chain}${ip}`, chain);
+    // const ipCheck = checker.checkIp(`${chain}${ip}`, chain);
+    
+    const balances = await fetch(`${chainConf.endpoint.rpc_endpoint}/cosmos/bank/v1beta1/balances/${address}`)
+    const results = await balances.json()
 
-    const [addressResult, ipResult] = await Promise.all([addressCheck, ipCheck]);
+    console.log("Balances for ", address, results)
+
+    const addressResult = results.balances.filter(r => r.denom == 'mact' && r.amount == '1').length == 0;
+    // const [addressResult] = await Promise.all([addressCheck, ipCheck]);
 
     console.log('Checking address:', addressResult);
-    console.log('Checking IP:', ipResult);
+    // console.log('Checking IP:', ipResult);
 
-    if (addressResult && ipResult) {
+    if (addressResult) {
       await checker.update(`${chain}${ip}`); // get ::1 on localhost
       console.log('send tokens to ', address);
       
@@ -120,7 +126,7 @@ app.get('/send/:chain/:address', async (req, res) => {
         res.send({ result: `err: ${err}` });
       }
     } else {
-      res.send({ result: "You requested too often" });
+      res.send({ result: "You account is already initialized with 1 MACT" });
     }
   } catch (err) {
     console.error(err);
