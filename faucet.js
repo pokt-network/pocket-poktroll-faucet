@@ -126,7 +126,7 @@ app.get('/send/:chain/:address', async (req, res) => {
         res.send({ result: `err: ${err}` });
       }
     } else {
-      res.send({ result: "This account has already been initialized with 1 MACT. Additional requests are not allowed." });
+      res.send({ result: "You’ve already claimed 1 MACT." });
     }
   } catch (err) {
     console.error(err);
