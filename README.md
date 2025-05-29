@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://www.pokt.network">
+  <a href="https://pocket.network">
     <img src=".github/faucet_image.png" alt="Shannon Testnet Faucet Image" width="850"/>
   </a>
   <h1>Shannon Testnet Faucet</h1>
