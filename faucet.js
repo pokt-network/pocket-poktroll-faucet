@@ -99,6 +99,11 @@ app.get('/send/:chain/:address', async (req, res) => {
       return res.send({ result: `Address [${address}] is not supported.` });
     }
 
+    const isHealthy = await checkRpcHealth(chainConf.endpoint.rpc_endpoint);
+
+    if(!isHealthy){
+      res.status(503).send({result: "RPC endpoint for pocket appears to be unreachable"})
+    }
     const addressCheck = checker.checkAddress(address, chain);
     // const ipCheck = checker.checkIp(`${chain}${ip}`, chain);
     
