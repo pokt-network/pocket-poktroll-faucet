@@ -107,7 +107,7 @@ app.get('/send/:chain/:address', async (req, res) => {
     const addressCheck = checker.checkAddress(address, chain);
     // const ipCheck = checker.checkIp(`${chain}${ip}`, chain);
     
-    const balances = await fetch(`${chainConf.endpoint.rpc_endpoint}/cosmos/bank/v1beta1/balances/${address}`)
+    const balances = await fetch(`${chainConf.endpoint.api_endpoint}/cosmos/bank/v1beta1/balances/${address}`)
     const results = await balances.json()
 
     console.log("Balances for ", address, results)

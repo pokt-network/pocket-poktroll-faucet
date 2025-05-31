@@ -8,6 +8,7 @@ dotenv.config();
 var mnemonic = process.env.mnemonic;
 var chainId = process.env.chainId;
 var rpcEndpoint = process.env.rpcEndpoint;
+var apiEndpoint = process.env.apiEndpoint;
 var bech32Prefix = process.env.bech32Prefix;
 var txDenom = process.env.txDenom;
 var txAmount = process.env.txAmount;
@@ -54,6 +55,7 @@ export default {
             tokenName: tokenName,
             endpoint: {
                 rpc_endpoint: rpcEndpoint,
+                api_endpoint: apiEndpoint
                 // Ensure CORS is enabled in the RPC section of config.toml.
                 // Example: cors_allowed_origins = ["*"]
             },
