@@ -5,171 +5,424 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Faucet - Pocket Network</title>
-  <meta name=”robots” content="index, follow">
+  <meta name="robots" content="index, follow">
   <meta name="description" content="Uniform Faucet Tool For Poktroll">
   <link rel="icon"
     href="https://assets-global.website-files.com/651fe0a9a906d151784935f8/65834b8745b60c35c76cab89_Logo-black.svg">
-  <meta>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 10vw;
+      background-color: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      flex-shrink: 0;
+    }
+
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    header nav {
+      gap: 20px;
+      display: flex;
+    }
+
+    header nav a {
+      color: #171c1fa6;
+      text-decoration: none;
+      font-weight: 400;
+      font-size: 18px;
+    }
+
+    header nav a:hover {
+      color: #698DFF;
+    }
+
+    header nav a.active {
+      color: #698DFF;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 0.5em 1em;
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #ffffff;
+      background-color: #007bff;
+      border-radius: 20px;
+      text-transform: uppercase;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+      margin-left: 10px;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-image: url("/image.png");
+      background-position: 70vw center;
+      background-repeat: no-repeat;
+      gap: 20px;
+      padding: 20px;
+      min-height: calc(100vh - 120px);
+    }
+
+    .faucet-card {
+      width: min(50vw, 600px);
+      border: 3px solid #d99e20;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      background-color: #ffffff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .faucet-card.faucet-error {
+      border-color: #e03834 !important;
+    }
+
+    .faucet-card.faucet-success {
+      border-color: #6ac136 !important;
+    }
+
+    .faucet-card img {
+      height: 50px;
+      margin-bottom: 15px;
+    }
+
+    .faucet-card h1 {
+      font-weight: 700;
+      font-size: 22px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .faucet-card p {
+      margin-bottom: 20px;
+      color: #444;
+      font-size: 14px;
+    }
+
+    .form-control {
+      height: 40px;
+      border-radius: 6px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+    }
+
+    .form-control:focus {
+      border-color: #698DFF;
+      box-shadow: 0 0 8px rgba(105, 141, 255, 0.3);
+    }
+
+    .btn-yellow {
+      background-color: #f1b405;
+      color: #000;
+      font-weight: bold;
+      height: 40px;
+      border-radius: 6px;
+      padding: 0 15px;
+      border: none;
+      font-size: 14px;
+    }
+
+    .btn-yellow:hover {
+      background-color: #d99e04;
+    }
+
+    .btn-yellow:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .error-alert {
+      background-color: #dc3545;
+      color: white;
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 6px 6px 0 0;
+      text-align: center;
+      border: none;
+      margin: -15px -15px 15px -15px;
+    }
+
+    .success-alert {
+      background-color: #6ac136;
+      color: #fff;
+      font-size: 14px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      text-align: center;
+      margin: -15px -15px 15px -15px;
+    }
+
+    .faq-container {
+      width: min(50vw, 600px);
+    }
+
+    .faq-header {
+      text-align: center;
+      font-weight: 600;
+      font-size: 18px;
+      margin: 10px 0;
+      color: #333;
+    }
+
+    .faq-wrapper {
+      background-color: #10249c;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .accordion-item {
+      background-color: transparent;
+      border: none;
+      border-radius: 6px !important;
+      margin-bottom: 5px;
+    }
+
+    .accordion-button {
+      background-color: transparent;
+      color: #ffffff;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 10px 15px;
+      border-radius: 6px;
+    }
+
+    .accordion-button:not(.collapsed) {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+
+    .accordion-button::after {
+      filter: invert(1);
+    }
+
+    .accordion-body {
+      background-color: transparent;
+      color: #dcdcdc;
+      font-size: 13px;
+      padding: 10px 15px;
+    }
+
+    .accordion-body a {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    footer {
+      background-color: #10249c;
+      color: white;
+      padding: 15px 10vw;
+      flex-shrink: 0;
+    }
+
+    footer .logo {
+      height: 25px;
+    }
+
+    footer a {
+      color: #dcdcdc;
+      text-decoration: none;
+      margin-right: 15px;
+      font-size: 12px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .footer-legal {
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    .footer-nav {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .footer-nav a {
+      margin-right: 10px;
+      font-size: 12px;
+    }
+
+    .processing-bar {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      header {
+        padding: 12px 5vw;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      header nav {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .faucet-card,
+      .faq-container {
+        width: 90vw;
+      }
+
+      .main-content {
+        padding: 10px;
+      }
+
+      footer {
+        padding: 15px 5vw;
+      }
+
+      .d-flex.gap-2 {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
+
+      .form-control {
+        width: 100% !important;
+      }
+    }
+  </style>
 </head>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
-  integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
-<style>
-  .nav-link {
-    border-bottom: 5px solid transparent;
-    color: aliceblue;
-    margin: 0 5px;
-    font-weight: 300;
-  }
 
-  .nav-link:hover {
-    color: #698DFF;
-  }
-
-  .active {
-    color: #698DFF;
-  }
-
-  body {
-    color: aliceblue;
-  }
-
-  .input-control:focus {
-    border-color: #698DFF;
-    box-shadow: inset 0 1px 1px rgba(39, 169, 224, 0.075), 0 0 8px rgba(39, 169, 224, 0.6);
-  }
-
-  button {
-    color: aliceblue;
-  }
-
-  .accordion-button::after {
-    filter: invert(100%);
-  }
-
-  .accordion-button:not(.collapsed)::after {
-    background-image: var(--bs-accordion-btn-icon);
-  }
-
-  div {
-    color: aliceblue;
-  }
-
-  .pill {
-    display: inline-block;
-    padding: 0.5em 1em;
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #ffffff;
-    background-color: #007bff;
-    /* Blue color */
-    border-radius: 20px;
-    text-transform: uppercase;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-  }
-
-  .processing-bar {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-  }
-</style>
-</head>
-
-<body style="background-color: #231f20;">
+<body>
   <div id="app">
-    <main class="container-sm mx-auto col-xl-6 col-lg-6 col-md-12 col-12">
-      <div class="container text-center mt-3">
-        <div class="row">
-          <div class="col-sm align-items-center d-flex">
-            <img id="logo" class="d-block" style="max-width: 200px;" src="<%= project.logo %>"
-              :alt="`${testnet} Faucet`">
-            <div class="pill" :style="`display: ${!this.isBeta ? 'none' : ''}`">beta</div>
-          </div>
-          <div class="col-sm align-items-center d-flex justify-content-end">
-            <div style="flex-direction: row; display: flex; width: 80%; justify-content: space-between;">
-              <a v-bind:class="[path === '/' ? 'active':'', 'nav-link']" href="#">Home</a>
-              <a class="nav-link" href="https://www.pokt.network/about" target="_blank">About</a>
-              <a class="nav-link" href="https://www.pokt.network/blog" target="_blank">Blog</a>
-              <a class="nav-link" href="https://docs.pokt.network/" target="_blank">Documentation</a>
-            </div>
-          </div>
-        </div>
-        <p class="col-sm align-items-center d-flex text-start"
-          style="margin-top: 25%; font-size: 54px; font-weight: bold; line-height:normal;">
-          POCKET <%= blockchains[0].chainType %><br>FAUCET
+    <header>
+      <div class="d-flex align-items-center">
+        <img id="logo" src="/logo1.png" :alt="`${testnet} Faucet`">
+        <div class="pill" :style="`display: ${!this.isBeta ? 'none' : ''}`">beta</div>
+      </div>
+      <nav>
+        <a :class="[path === '/' ? 'active':'']" href="#">Home</a>
+        <a href="https://www.pokt.network/about" target="_blank">About</a>
+        <a href="https://www.pokt.network/blog" target="_blank">Blog</a>
+        <a href="https://docs.pokt.network/" target="_blank">Docs</a>
+      </nav>
+    </header>
+
+    <div class="main-content">
+      <div class="faucet-card" :class="{ 'faucet-error': showError, 'faucet-success': showSuccess }">
+        <div v-if="showAlert" v-html="alertMessage"></div>
+        <img src="/img.png" alt="Faucet Icon" />
+        <h1>POCKET <%= blockchains[0].chainType %> FAUCET</h1>
+        <p>
+          Get a free MACT token to initialize your Shannon account and start your journey on the network
         </p>
-        <p class="col-sm align-items-center d-flex text-start" style="font-size: 20px;">
-          Get a free MACT token to initialize your Shannon account <br>and start your journey on the network
-        </p>
-        <div class="d-flex flex-row col-12">
-          <input id="address" class="rounded-left input-control mt-4 col-lg-8 col-md-8 col-xl-8 col-7 p-2"
-            placeholder="Enter your wallet address" v-model="address" name="address" />
-          <button type="button"
-            class="rounded-right btn btn-primary d-flex flex-row mt-4 col-lg-4 col-md-4 col-xl-4 col-5 align-items-center justify-content-center"
-            style="padding: 5px 20px; background-color: #698DFF; border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
-            @click="requestToken(this)">
-            <span>Send {{ this.denom == 'POKT' ? this.txAmount : '<%= blockchains[0].tx.amount[0].amount %>' }} <%= blockchains[0].tokenName %></span>
+        <div class="d-flex justify-content-center gap-2">
+          <input 
+            id="address" 
+            class="form-control" 
+            style="width: 70%"
+            placeholder="Enter your wallet address" 
+            v-model="address" 
+            name="address" 
+          />
+          <button 
+            type="button" 
+            class="btn-yellow" 
+            @click="requestToken(this)"
+            :disabled="isProcessing"
+          >
+            <span v-if="!isProcessing">Send {{ this.denom == 'POKT' ? this.txAmount : '<%= blockchains[0].tx.amount[0].amount %>' }} <%= blockchains[0].tokenName %></span>
+            <span v-else>Processing...</span>
           </button>
         </div>
-        <div id="processing-bar" class="processing-bar" v-if="isProcessing">
-          <span>We'll notify you shortly. Transaction processing...</span>
-        </div>
-        <!-- Modal for messages -->
-        <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="messageModalLabel" style="color: black;">Transaction Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body" v-html="message"></div>
-            </div>
-          </div>
-        </div>
-        <h2 class="col-sm d-flex align-items-center" style="margin-top: 30%;">
-          Frequently Asked Questions (FAQs)
-        </h2>
-        <div style="margin-top: 2%; background-color: #443c3e; padding: 5px; border-radius: 10px; margin-bottom: 30px;">
-          <div class="accordion accordion-flush  border-0" id="accordionFlushExample"
-            style="background-color: #443c3e;">
-            <div v-for="FAQ in FAQs" class="accordion-item overflow-hidden border-0"
-              style="background-color: #443c3e; border:none!important;">
-              <h2 class="accordion-header overflow-hidden border-0" :id="FAQ.id">
-                <button class="accordion-button collapsed overflow-hidden border-0"
-                  style="background-color: #443c3e; color: white; border: none;" type="button" data-bs-toggle="collapse"
-                  :data-bs-target="'#' + FAQ.id2" aria-expanded="false" :aria-controls="FAQ.id2">
-                  {{FAQ.question}}
+      </div>
+
+      <div class="faq-container">
+        <h4 class="faq-header">Frequently Asked Questions (FAQs)</h4>
+        <div class="faq-wrapper">
+          <div class="accordion" id="faqAccordion">
+            <div v-for="(FAQ, index) in FAQs" class="accordion-item" :key="FAQ.id">
+              <h2 class="accordion-header" :id="FAQ.id">
+                <button 
+                  class="accordion-button collapsed" 
+                  type="button" 
+                  data-bs-toggle="collapse"
+                  :data-bs-target="'#' + FAQ.id2" 
+                  :aria-expanded="index === 0 ? 'true' : 'false'"
+                  :aria-controls="FAQ.id2"
+                >
+                  {{ FAQ.question }}
                 </button>
               </h2>
-              <div :id="FAQ.id2" class="accordion-collapse collapse overflow-hidden border-0" :aria-labelledby="FAQ.id"
-                data-bs-parent="#accordionFlushExample">
-                <div class="accordion-body overflow-hidden border-0 text-start" v-html="FAQ.answer"></div>
+              <div 
+                :id="FAQ.id2" 
+                :class="['accordion-collapse', 'collapse', index === 0 ? 'show' : '']"
+                :aria-labelledby="FAQ.id"
+                data-bs-parent="#faqAccordion"
+              >
+                <div class="accordion-body" v-html="FAQ.answer"></div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <!-- FAQs -->
-
-    </main>
-  </div>
-  
-  <!-- footer -->
-  <footer style="background-color: #231f20; text-align: center; padding: 15px 0; width: 100%; position: sticky; bottom: 0; z-index: 100; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);">
-    <div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap;">
-      &copy; <span id="currentYear"></span> &nbsp;Pocket Network. All rights reserved. Powered by 
-      <a href="https://stakenodes.org" target="_blank" style="display: flex; align-items: center; margin-left: 1px; text-decoration: none;">
-        <img src="https://stakenodes.org/favicon.png" alt="Stakenodes" style="height: 24px; margin: 0 5px;">
-        <span style="color: white">Stakenodes</span>
-      </a>
     </div>
-  </footer>
+
+    <div id="processing-bar" class="processing-bar" v-if="isProcessing">
+      <span>We'll notify you shortly. Transaction processing...</span>
+    </div>
+
+    <footer>
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <img src="/logo.png" alt="Pocket Logo" class="logo" />
+        <div>
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+        </div>
+      </div>
+      <div class="footer-links">
+        <div class="footer-legal">
+          © <span id="currentYear"></span> Pocket Network. All rights reserved.
+        </div>
+        <div class="footer-nav">
+          <a href="https://discord.gg/pokt" target="_blank">Forum</a>
+          <a href="#" target="_blank">Explorer</a>
+          <a href="https://docs.pokt.network/" target="_blank">Docs</a>
+        </div>
+      </div>
+    </footer>
+  </div>
 
   <script type="module">
     // Set current year for footer
@@ -192,6 +445,11 @@
           txAmount: '',
           ethAddr: '0xxxx',
           path: window.location.pathname,
+          isProcessing: false,
+          showAlert: false,
+          alertMessage: '',
+          showError: false,
+          showSuccess: false,
           FAQs: [
             {
               "question": "What is a faucet?",
@@ -242,7 +500,6 @@
               "id2": "flush-collapseEight",
             }
           ],
-          isProcessing: false,
         }
       },
       created() {
@@ -256,7 +513,6 @@
           this.limitHours = '<%= blockchains[0].limit.hours %>'
           this.FAQs[1].answer = `Enter your Pocket Network wallet address in the designated textbox field and click 'Send ${this.denom == 'POKT' ? this.txAmount: '<%= blockchains[0].tx.amount[0].amount %>'} <%= blockchains[0].tokenName %>'. The faucet will generate a transaction and send the testnet tokens to the provided address. If you're interested, you can monitor the transaction's status using a blockchain explorer or an RPC endpoint.`
           this.FAQs[3].answer = this.limitHours / (365 * 24) >= 1 ? `Yes, each Pocket Wallet address can request only once` : `Yes, each Pocket Wallet address can request only <%= blockchains[0].limit.address %> times per <%= blockchains[0].limit.hours %> hours.`
-          // this.placeholder = `Input an address (e.g.: ${data.sample[this.chain]}) to received tokens`
           this.onChange();
         });
       },
@@ -282,39 +538,75 @@
         requestToken(obj) {
           if (this.address) {
             this.isProcessing = true;
+            this.showAlert = false;
+            this.showError = false;
+            this.showSuccess = false;
             obj.disabled = true;
 
             fetch(`send/${this.chain}/${this.address}`).then(response => response.json()).then(data => {
               this.isProcessing = false;
               obj.disabled = false;
 
-              const alertType = data.result.code === 0 ? 'success' : 'danger';
-              const alertMessage = data.result.code === 0 ? 'Token sent' : 'Request failed';
-              this.message = `
-                <div class="alert alert-${alertType} alert-dismissible fade show" role="alert">
-                  <strong>${alertMessage}</strong>
-                  <div class="mt-2">
-                    ${data.result.txhash ? `
-                      <span class="d-block text-primary">Transaction Hash: <code>${data.result.txhash}</code></span>
-                      <button class="btn btn-outline-secondary btn-sm mt-1" onclick="copyToClipboard('${data.result.txhash}')">Copy</button>
-                    ` : `
-                      <textarea class="form-control mt-1" rows="5" style="background-color:transparent">${JSON.stringify(data, null, 2)}</textarea>
-                    `}
+              console.log('Response data:', data);
+              
+              // Handle different response formats
+              let result = data.result;
+              
+              // If result is a string, it's likely an error message
+              if (typeof result === 'string') {
+                this.showError = true;
+                this.alertMessage = `
+                  <div class="error-alert">
+                    ${result}
                   </div>
+                `;
+              }
+              // If result has a code property
+              else if (result && typeof result === 'object') {
+                if (result.code === 0) {
+                  this.showSuccess = true;
+                  this.alertMessage = `
+                    <div class="success-alert">
+                      Success! Transaction sent. Hash: ${result.txhash || result.hash || 'N/A'}
+                    </div>
+                  `;
+                } else {
+                  this.showError = true;
+                  this.alertMessage = `
+                    <div class="error-alert">
+                      ${result.message || 'Request failed. Please try again later.'}
+                    </div>
+                  `;
+                }
+              }
+              // Fallback for unexpected response format
+              else {
+                this.showError = true;
+                this.alertMessage = `
+                  <div class="error-alert">
+                    Unexpected response format. Please try again later.
+                  </div>
+                `;
+              }
+              
+              this.showAlert = true;
+            }).catch(error => {
+              this.isProcessing = false;
+              obj.disabled = false;
+              this.showError = true;
+              this.alertMessage = `
+                <div class="error-alert">
+                  Error: ${error.message || 'Something went wrong'}
                 </div>
               `;
-              // Show the modal
-              const modal = new bootstrap.Modal(document.getElementById('messageModal'));
-              modal.show();
+              this.showAlert = true;
             });
           } else {
             obj.disabled = false;
-            this.message = '<span class="text-danger">Address is required</span>';
-            // Show the modal
-            const modal = new bootstrap.Modal(document.getElementById('messageModal'));
-            modal.show();
+            this.showError = true;
+            this.alertMessage = '<div class="error-alert">Please enter a wallet address</div>';
+            this.showAlert = true;
           }
-          obj.disabled = false;
         }
       }
     }).mount('#app')
@@ -323,16 +615,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
     crossorigin="anonymous"></script>
-  <script>
-
-function copyToClipboard(text) {
-                        navigator.clipboard.writeText(text).then(() => {
-                          alert('Transaction hash copied to clipboard!');
-                        }).catch(err => {
-                          console.error('Failed to copy: ', err);
-                        });
-                      }
-  </script>
 </body>
 
 </html>
