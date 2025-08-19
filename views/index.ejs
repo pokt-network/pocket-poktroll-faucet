@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Faucet for Shannon</title>
+  <title>Pocket Mainnet Faucet</title>
   <meta name=”robots” content="index, follow">
   <meta name="description" content="Uniform Faucet Tool For Poktroll">
   <link rel="icon"
@@ -14,59 +14,181 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
   integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
 <style>
-  .nav-link {
-    border-bottom: 5px solid transparent;
-    color: aliceblue;
-    margin: 0 5px;
-    font-weight: 300;
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
-
-  .nav-link:hover {
-    color: #698DFF;
-  }
-
-  .active {
-    color: #698DFF;
-  }
-
   body {
-    color: aliceblue;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
-
-  .input-control:focus {
-    border-color: #698DFF;
-    box-shadow: inset 0 1px 1px rgba(39, 169, 224, 0.075), 0 0 8px rgba(39, 169, 224, 0.6);
+  .app-container{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
-
-  button {
-    color: aliceblue;
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 10vw;
+    background-color: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0;
   }
-
-  .accordion-button::after {
-    filter: invert(100%);
+  header img {
+    width: 10.1vw;
   }
-
-  .accordion-button:not(.collapsed)::after {
-    background-image: var(--bs-accordion-btn-icon);
+  header nav {
+    gap: 20%;
+    display: flex;
   }
-
-  div {
-    color: aliceblue;
+  header nav a {
+    color: #171c1fa6;
+    text-decoration: none;
+    font-weight: 400;
+    font-size: 18px;
   }
-
-  .pill {
-    display: inline-block;
-    padding: 0.5em 1em;
-    font-size: 0.9rem;
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-image: url("/image.png");
+    background-position: 70vw;
+    background-repeat: no-repeat;
+    gap: 10px;
+  }
+  .faucet-card {
+    width: 50vw;
+    border: 3px solid #d99e20;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    background-color: #ffffff;
+  }
+  .faucet-card.faucet-error {
+    border-color: #e03834 !important;
+  }
+  .faucet-card.faucet-success {
+    border-color: #6ac136 !important;
+  }
+  .faucet-card img {
+    height: 50px;
+    margin-bottom: 15px;
+  }
+  .faucet-card h1 {
+    font-weight: 700;
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+  .faucet-card p {
+    margin-bottom: 20px;
+    color: #444;
+    font-size: 14px;
+  }
+  .form-control {
+    height: 40px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .btn-yellow {
+    background-color: #f1b405;
+    color: #000;
     font-weight: bold;
-    color: #ffffff;
-    background-color: #007bff;
-    /* Blue color */
-    border-radius: 20px;
-    text-transform: uppercase;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    height: 40px;
+    border-radius: 6px;
+    padding: 0 15px;
+    border: none;
+    font-size: 14px;
   }
-
+  .error-alert {
+    background-color: #dc3545;
+    color: white;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px 6px 0 0;
+    text-align: center;
+    border: none;
+    margin: -15px -15px 15px -15px;
+  }
+  .success-alert {
+    background-color: #6ac136;
+    color: #fff;
+    font-size: 14px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px 6px 0 0;
+    text-align: center;
+    margin: -15px -15px 15px -15px;
+  }
+  .faq-container {
+    width: 50vw;
+  }
+  .faq-header {
+    text-align: center;
+    font-weight: 600;
+    font-size: 18px;
+    margin: 10px 0;
+  }
+  .accordion-item {
+    background-color: #10249c;
+    border: none;
+    border-radius: 6px !important;
+    margin-bottom: 5px;
+  }
+  .accordion-button {
+    background-color: #10249c;
+    color: #ffffff;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 15px;
+  }
+  .accordion-body {
+    background-color: #10249c;
+    color: #dcdcdc;
+    font-size: 13px;
+    padding: 10px 15px;
+  }
+  footer {
+    background-color: #10249c;
+    color: white;
+    padding: 15px 10vw;
+    flex-shrink: 0;
+  }
+  footer .logo {
+    height: 25px;
+  }
+  footer a {
+    color: #dcdcdc;
+    text-decoration: none;
+    margin-right: 15px;
+    font-size: 12px;
+  }
+  .footer-links {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .footer-legal {
+    font-size: 11px;
+    color: #aaa;
+  }
+  .footer-nav {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .footer-nav a {
+    margin-right: 10px;
+    font-size: 12px;
+  }
   .processing-bar {
     position: fixed;
     bottom: 20px;
@@ -81,94 +203,90 @@
 </style>
 </head>
 
-<body style="background-color: #231f20;">
-  <div id="app">
-    <main class="container-sm mx-auto col-xl-6 col-lg-6 col-md-12 col-12">
-      <div class="container text-center mt-3">
-        <div class="row">
-          <div class="col-sm align-items-center d-flex">
-            <img id="logo" class="d-block" style="max-width: 200px;" src="<%= project.logo %>"
-              :alt="`${testnet} Faucet`">
-            <div class="pill" :style="`display: ${!this.isBeta ? 'none' : ''}`">beta</div>
-          </div>
-          <div class="col-sm align-items-center d-flex justify-content-end">
-            <div style="flex-direction: row; display: flex; width: 80%; justify-content: space-between;">
-              <a v-bind:class="[path === '/' ? 'active':'', 'nav-link']" href="#">Home</a>
-              <a class="nav-link" href="https://www.pokt.network/about" target="_blank">About</a>
-              <a class="nav-link" href="https://www.pokt.network/blog" target="_blank">Blog</a>
-              <a class="nav-link" href="https://docs.pokt.network/" target="_blank">Documentation</a>
-            </div>
-          </div>
-        </div>
-        <p class="col-sm align-items-center d-flex text-start"
-          style="margin-top: 25%; font-size: 54px; font-weight: bold; line-height:normal;">
-          SHANNON TESTNET<br>FAUCET
+<body>
+  <div id="app" class="app-container">
+    <header>
+      <img src="/logo1.png" alt="Pocket Logo" />
+      <nav>
+        <a href="#">Home</a>
+        <a href="https://www.pokt.network/about" target="_blank">About</a>
+        <a href="https://www.pokt.network/blog" target="_blank">Blog</a>
+        <a href="https://docs.pokt.network/" target="_blank">Docs</a>
+      </nav>
+    </header>
+
+    <div class="main-content">
+      <div :class="['faucet-card', cardStateClass]">
+        <div id="result" v-show="bannerHtml" v-html="bannerHtml"></div>
+        <img :src="faucetImageSrc" alt="Faucet Icon" />
+        <h1>Pocket Mainnet Faucet</h1>
+        <p>
+          Get free POKT to initialize your Shannon account and start your journey on the network.
         </p>
-        <p class="col-sm align-items-center d-flex text-start" style="font-size: 20px;">
-          Get free uPOKT delivered to your wallet effortlessly<br>
-          for a smooth and productive development.
-        </p>
-        <div class="d-flex flex-row col-12">
-          <input id="address" class="rounded-left input-control mt-4 col-lg-8 col-md-8 col-xl-8 col-7 p-2"
-            placeholder="Enter your wallet address" v-model="address" name="address" />
-          <button type="button"
-            class="rounded-right btn btn-primary d-flex flex-row mt-4 col-lg-4 col-md-4 col-xl-4 col-5 align-items-center justify-content-center"
-            style="padding: 5px 20px; background-color: #698DFF; border-top-left-radius: 0px; border-bottom-left-radius: 0px;"
-            @click="requestToken(this)">
-            <span>Send {{ this.txAmount }} POKT</span>
+        <div class="d-flex justify-content-center gap-2">
+          <input type="hidden" name="chain" :value="chain" />
+          <input
+            type="text"
+            id="address"
+            class="form-control w-50"
+            placeholder="Enter your wallet address"
+            v-model="address"
+            required
+          />
+          <button type="button" class="btn-yellow" @click="requestToken($event.currentTarget)">
+            Send {{ txAmount }} POKT
           </button>
         </div>
-        <div id="processing-bar" class="processing-bar" v-if="isProcessing">
-          <span>We'll notify you shortly. Transaction processing...</span>
-        </div>
-        <!-- Modal for messages -->
-        <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="messageModalLabel" style="color: black;">Transaction Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body" v-html="message"></div>
-            </div>
-          </div>
-        </div>
-        <h2 class="col-sm d-flex align-items-center" style="margin-top: 30%;">
-          Frequently Asked Questions (FAQs)
-        </h2>
-        <div style="margin-top: 2%; background-color: #443c3e; padding: 5px; border-radius: 10px; margin-bottom: 30px;">
-          <div class="accordion accordion-flush  border-0" id="accordionFlushExample"
-            style="background-color: #443c3e;">
-            <div v-for="FAQ in FAQs" class="accordion-item overflow-hidden border-0"
-              style="background-color: #443c3e; border:none!important;">
-              <h2 class="accordion-header overflow-hidden border-0" :id="FAQ.id">
-                <button class="accordion-button collapsed overflow-hidden border-0"
-                  style="background-color: #443c3e; color: white; border: none;" type="button" data-bs-toggle="collapse"
-                  :data-bs-target="'#' + FAQ.id2" aria-expanded="false" :aria-controls="FAQ.id2">
-                  {{FAQ.question}}
+      </div>
+
+      <div class="faq-container">
+        <h4 class="faq-header">Frequently Asked Questions (FAQs)</h4>
+        <div class="p-2 rounded-3" style="background-color: #10249c; color: white">
+          <div class="accordion" id="faqAccordion">
+            <div class="accordion-item border-0" v-for="FAQ in FAQs" :key="FAQ.id">
+              <h2 class="accordion-header">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  :data-bs-target="'#' + FAQ.id2"
+                >
+                  {{ FAQ.question }}
                 </button>
               </h2>
-              <div :id="FAQ.id2" class="accordion-collapse collapse overflow-hidden border-0" :aria-labelledby="FAQ.id"
-                data-bs-parent="#accordionFlushExample">
-                <div class="accordion-body overflow-hidden border-0 text-start" v-html="FAQ.answer"></div>
+              <div :id="FAQ.id2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" v-html="FAQ.answer"></div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <!-- FAQs -->
+    </div>
 
-    </main>
+    <div id="processing-bar" class="processing-bar" v-if="isProcessing">
+      <span>We'll notify you shortly. Transaction processing...</span>
+    </div>
   </div>
   
   <!-- footer -->
-  <footer style="background-color: #231f20; text-align: center; padding: 15px 0; width: 100%; position: sticky; bottom: 0; z-index: 100; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);">
-    <div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap;">
-      &copy; <span id="currentYear"></span> &nbsp;Pocket Network. All rights reserved. Powered by 
-      <a href="https://stakenodes.org" target="_blank" style="display: flex; align-items: center; margin-left: 1px; text-decoration: none;">
-        <img src="https://stakenodes.org/favicon.png" alt="Stakenodes" style="height: 24px; margin: 0 5px;">
-        <span style="color: white">Stakenodes</span>
-      </a>
+  <footer>
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+      <img src="/logo.png" alt="Pocket Logo" class="logo" />
+      <div>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <div class="footer-legal">
+        © <span id="currentYear"></span> Pocket Network. All rights reserved.
+      </div>
+      <div class="footer-nav">
+        <a href="https://forum.pokt.network/" target="_blank">Forum</a>
+        <a href="https://www.poktscan.com/" target="_blank">Explorer</a>
+        <a href="https://docs.pokt.network/" target="_blank">Docs</a>
+      </div>
     </div>
   </footer>
 
@@ -244,6 +362,9 @@
             }
           ],
           isProcessing: false,
+          bannerHtml: '',
+          cardStateClass: '',
+          faucetImageSrc: '/img.png',
         }
       },
       created() {
@@ -277,41 +398,41 @@
           // })
         },
         requestToken(obj) {
-          if (this.address) {
-            this.isProcessing = true;
-            obj.disabled = true;
-
-            fetch(`/send/${this.chain}/${this.address}`).then(response => response.json()).then(data => {
-              this.isProcessing = false;
-              obj.disabled = false;
-
-              const alertType = data.result.code === 0 ? 'success' : 'danger';
-              const alertMessage = data.result.code === 0 ? 'Token sent' : 'Request failed';
-              this.message = `
-                <div class="alert alert-${alertType} alert-dismissible fade show" role="alert">
-                  <strong>${alertMessage}</strong>
-                  <div class="mt-2">
-                    ${data.result.txhash ? `
-                      <span class="d-block text-primary">Transaction Hash: <code>${data.result.txhash}</code></span>
-                      <button class="btn btn-outline-secondary btn-sm mt-1" onclick="copyToClipboard('${data.result.txhash}')">Copy</button>
-                    ` : `
-                      <textarea class="form-control mt-1" rows="5" style="background-color:transparent">${JSON.stringify(data, null, 2)}</textarea>
-                    `}
-                  </div>
-                </div>
-              `;
-              // Show the modal
-              const modal = new bootstrap.Modal(document.getElementById('messageModal'));
-              modal.show();
-            });
-          } else {
-            obj.disabled = false;
-            this.message = '<span class="text-danger">Address is required</span>';
-            // Show the modal
-            const modal = new bootstrap.Modal(document.getElementById('messageModal'));
-            modal.show();
+          if (!this.address) {
+            this.bannerHtml = '<div class="error-alert">Please enter a wallet address</div>';
+            this.cardStateClass = 'faucet-error';
+            this.faucetImageSrc = '/image2.png';
+            return;
           }
-          obj.disabled = false;
+
+          this.isProcessing = true;
+          obj && (obj.disabled = true);
+
+          fetch(`/send/${this.chain}/${this.address}`)
+            .then(response => response.json())
+            .then(data => {
+              const success = data && data.result && data.result.code === 0;
+              if (success) {
+                const hash = data.result.txhash || data.result.hash || 'N/A';
+                this.bannerHtml = `<div class=\"success-alert\">Success! Transaction sent. Hash: ${hash}</div>`;
+                this.cardStateClass = 'faucet-success';
+                this.faucetImageSrc = '/image3.png';
+              } else {
+                const msg = (data && data.result) ? (typeof data.result === 'string' ? data.result : JSON.stringify(data.result)) : 'Request failed. Please try again later.';
+                this.bannerHtml = `<div class=\"error-alert\">${msg}</div>`;
+                this.cardStateClass = 'faucet-error';
+                this.faucetImageSrc = '/image2.png';
+              }
+            })
+            .catch(error => {
+              this.bannerHtml = `<div class=\"error-alert\">Error: ${error && error.message ? error.message : 'Something went wrong'}</div>`;
+              this.cardStateClass = 'faucet-error';
+              this.faucetImageSrc = '/image2.png';
+            })
+            .finally(() => {
+              this.isProcessing = false;
+              obj && (obj.disabled = false);
+            });
         }
       }
     }).mount('#app')

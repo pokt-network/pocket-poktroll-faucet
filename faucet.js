@@ -22,6 +22,7 @@ console.log("loaded config: ", conf)
 const app = express()
 
 app.set("view engine", "ejs");
+app.use(express.static('public'));
 
 const checker = new FrequencyChecker(conf)
 
