@@ -543,52 +543,70 @@
             this.showSuccess = false;
             obj.disabled = true;
 
-            fetch(`send/${this.chain}/${this.address}`).then(response => response.json()).then(data => {
+            fetch(`send/${this.chain}/${this.address}`).then(async response => {
+              let data = null;
+              try {
+                data = await response.json();
+              } catch (e) {
+                data = null;
+              }
+
               this.isProcessing = false;
               obj.disabled = false;
 
               console.log('Response data:', data);
-              
-              // Handle different response formats
-              let result = data.result;
-              
-              // If result is a string, it's likely an error message
+
+              // Prefer HTTP status handling first
+              if (!response.ok) {
+                const message = (data && (data.message || (data.result && data.result.message))) || `Request failed with status ${response.status}`;
+                this.showError = true;
+                this.showSuccess = false;
+                this.alertMessage = `
+                  <div class="error-alert">
+                    ${message}
+                  </div>
+                `;
+                this.showAlert = true;
+                return;
+              }
+
+              const result = (data && (data.result || data)) || {};
+
+              // If the backend returned a plain string, treat it as an error message
               if (typeof result === 'string') {
                 this.showError = true;
+                this.showSuccess = false;
                 this.alertMessage = `
-                  <div class="error-alert">
-                    ${result}
-                  </div>
+                  <div class=\"error-alert\">${result}</div>
                 `;
+                this.showAlert = true;
+                return;
               }
-              // If result has a code property
-              else if (result && typeof result === 'object') {
-                if (result.code === 0) {
-                  this.showSuccess = true;
-                  this.alertMessage = `
-                    <div class="success-alert">
-                      Success! Transaction sent. Hash: ${result.txhash || result.hash || 'N/A'}
-                    </div>
-                  `;
-                } else {
-                  this.showError = true;
-                  this.alertMessage = `
-                    <div class="error-alert">
-                      ${result.message || 'Request failed. Please try again later.'}
-                    </div>
-                  `;
-                }
-              }
-              // Fallback for unexpected response format
-              else {
+              const code = typeof result.code === 'number' ? result.code : 0;
+              const txHash = result.txhash || result.hash || '';
+
+              // If backend signals error via result.code, treat as error
+              if (code !== 0) {
                 this.showError = true;
+                this.showSuccess = false;
                 this.alertMessage = `
                   <div class="error-alert">
-                    Unexpected response format. Please try again later.
+                    ${result.message || 'Request failed. Please try again later.'}
                   </div>
                 `;
+                this.showAlert = true;
+                return;
               }
-              
+
+              // Success UI with copy-to-clipboard button when we have a hash
+              const copyHtml = txHash ? 'Hash: <code>' + txHash + '</code> <button class="btn btn-light btn-sm ms-2" onclick="copyToClipboard(\'' + txHash + '\')">Copy</button>' : '';
+              this.showSuccess = true;
+              this.showError = false;
+              this.alertMessage = `
+                <div class="success-alert">
+                  Success! Transaction sent. ${copyHtml}
+                </div>
+              `;
               this.showAlert = true;
             }).catch(error => {
               this.isProcessing = false;
