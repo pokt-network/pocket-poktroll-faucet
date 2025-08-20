@@ -411,7 +411,7 @@
           this.isProcessing = true;
           obj && (obj.disabled = true);
 
-          fetch(`/send/${this.chain}/${this.address}`)
+          fetch(`send/${this.chain}/${this.address}`)
             .then(response => response.json())
             .then(data => {
               const success = data && data.result && data.result.code === 0;
