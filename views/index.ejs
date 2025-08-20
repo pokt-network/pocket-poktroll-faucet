@@ -78,7 +78,7 @@
     border-color: #6ac136 !important;
   }
   .faucet-card img {
-    height: 50px;
+    height: 100px;
     margin-bottom: 15px;
   }
   .faucet-card h1 {
@@ -206,7 +206,7 @@
 <body>
   <div id="app" class="app-container">
     <header>
-      <img src="/logo1.png" alt="Pocket Logo" />
+      <img src="logo1.png" alt="Pocket Logo" />
       <nav>
         <a href="#">Home</a>
         <a href="https://www.pokt.network/about" target="_blank">About</a>
@@ -271,7 +271,7 @@
   <!-- footer -->
   <footer>
     <div class="d-flex justify-content-between align-items-center flex-wrap">
-      <img src="/logo.png" alt="Pocket Logo" class="logo" />
+      <img src="logo.png" alt="Pocket Logo" class="logo" />
       <div>
         <a href="#">Privacy</a>
         <a href="#">Terms</a>
@@ -364,7 +364,7 @@
           isProcessing: false,
           bannerHtml: '',
           cardStateClass: '',
-          faucetImageSrc: '/img.png',
+          faucetImageSrc: 'img.png',
         }
       },
       created() {
@@ -404,7 +404,7 @@
           if (!this.address) {
             this.bannerHtml = '<div class="error-alert">Please enter a wallet address</div>';
             this.cardStateClass = 'faucet-error';
-            this.faucetImageSrc = '/image2.png';
+            this.faucetImageSrc = 'image2.png';
             return;
           }
 
@@ -419,18 +419,18 @@
                 const hash = data.result.txhash || data.result.hash || 'N/A';
                 this.bannerHtml = `<div class=\"success-alert\">Success! Transaction sent. Hash: ${hash}</div>`;
                 this.cardStateClass = 'faucet-success';
-                this.faucetImageSrc = '/image3.png';
+                this.faucetImageSrc = 'image3.png';
               } else {
                 const msg = (data && data.result) ? (typeof data.result === 'string' ? data.result : JSON.stringify(data.result)) : 'Request failed. Please try again later.';
                 this.bannerHtml = `<div class=\"error-alert\">${msg}</div>`;
                 this.cardStateClass = 'faucet-error';
-                this.faucetImageSrc = '/image2.png';
+                this.faucetImageSrc = 'image2.png';
               }
             })
             .catch(error => {
               this.bannerHtml = `<div class=\"error-alert\">Error: ${error && error.message ? error.message : 'Something went wrong'}</div>`;
               this.cardStateClass = 'faucet-error';
-              this.faucetImageSrc = '/image2.png';
+              this.faucetImageSrc = 'image2.png';
             })
             .finally(() => {
               this.isProcessing = false;
