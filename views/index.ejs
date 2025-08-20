@@ -79,7 +79,6 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background-image: url("/image.png");
       background-position: 70vw center;
       background-repeat: no-repeat;
       gap: 20px;
@@ -106,7 +105,7 @@
     }
 
     .faucet-card img {
-      height: 50px;
+      height: 100px;
       margin-bottom: 15px;
     }
 
@@ -328,7 +327,7 @@
   <div id="app">
     <header>
       <div class="d-flex align-items-center">
-        <img id="logo" src="/logo1.png" :alt="`${testnet} Faucet`">
+        <img id="logo" src="logo1.png" :alt="`${testnet} Faucet`">
         <div class="pill" :style="`display: ${!this.isBeta ? 'none' : ''}`">beta</div>
       </div>
       <nav>
@@ -339,10 +338,10 @@
       </nav>
     </header>
 
-    <div class="main-content">
+    <div class="main-content" :style="{ backgroundImage: `url(image.png)` }">
       <div class="faucet-card" :class="{ 'faucet-error': showError, 'faucet-success': showSuccess }">
         <div v-if="showAlert" v-html="alertMessage"></div>
-        <img src="/img.png" alt="Faucet Icon" />
+        <img :src="bannerImage" alt="Faucet Icon" />
         <h1>POCKET <%= blockchains[0].chainType %> FAUCET</h1>
         <p>
           Get a free MACT token to initialize your Shannon account and start your journey on the network
@@ -405,7 +404,7 @@
 
     <footer>
       <div class="d-flex justify-content-between align-items-center flex-wrap">
-        <img src="/logo.png" alt="Pocket Logo" class="logo" />
+        <img src="logo.png" alt="Pocket Logo" class="logo" />
         <div>
           <a href="#">Privacy</a>
           <a href="#">Terms</a>
@@ -446,6 +445,7 @@
           ethAddr: '0xxxx',
           path: window.location.pathname,
           isProcessing: false,
+          bannerImage: 'img.png',
           showAlert: false,
           alertMessage: '',
           showError: false,
@@ -561,6 +561,7 @@
                 const message = (data && (data.message || (data.result && data.result.message))) || `Request failed with status ${response.status}`;
                 this.showError = true;
                 this.showSuccess = false;
+                this.bannerImage = 'image2.png';
                 this.alertMessage = `
                   <div class="error-alert">
                     ${message}
@@ -576,6 +577,7 @@
               if (typeof result === 'string') {
                 this.showError = true;
                 this.showSuccess = false;
+                this.bannerImage = 'image2.png';
                 this.alertMessage = `
                   <div class=\"error-alert\">${result}</div>
                 `;
@@ -589,6 +591,7 @@
               if (code !== 0) {
                 this.showError = true;
                 this.showSuccess = false;
+                this.bannerImage = 'image2.png';
                 this.alertMessage = `
                   <div class="error-alert">
                     ${result.message || 'Request failed. Please try again later.'}
@@ -601,6 +604,7 @@
               // Success UI with copy-to-clipboard button when we have a hash
               const copyHtml = txHash ? 'Hash: <code>' + txHash + '</code> <button class="btn btn-light btn-sm ms-2" onclick="copyToClipboard(\'' + txHash + '\')">Copy</button>' : '';
               this.showSuccess = true;
+              this.bannerImage = 'image3.png';
               this.showError = false;
               this.alertMessage = `
                 <div class="success-alert">
@@ -612,6 +616,7 @@
               this.isProcessing = false;
               obj.disabled = false;
               this.showError = true;
+              this.bannerImage = 'image2.png';
               this.alertMessage = `
                 <div class="error-alert">
                   Error: ${error.message || 'Something went wrong'}
@@ -623,6 +628,7 @@
             obj.disabled = false;
             this.showError = true;
             this.alertMessage = '<div class="error-alert">Please enter a wallet address</div>';
+            this.bannerImage = 'image2.png';
             this.showAlert = true;
           }
         }
