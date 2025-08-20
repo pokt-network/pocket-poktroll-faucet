@@ -23,6 +23,9 @@ const app = express()
 
 app.set("view engine", "ejs");
 
+// Serve static files from the public directory
+app.use(express.static('public'));
+
 const checker = new FrequencyChecker(conf)
 
 app.get('/', (req, res) => {
@@ -83,7 +86,6 @@ app.get('/balance/:chain', async (req, res) => {
   }
   res.send(balance);
 })
-
 app.get('/send/:chain/:address', async (req, res) => {
   const {chain, address} = req.params;
   const ip = req.headers['cf-connecting-ip'] || req.headers['x-real-ip'] || req.headers['X-Forwarded-For'] || req.ip;
@@ -107,16 +109,50 @@ app.get('/send/:chain/:address', async (req, res) => {
     const addressCheck = checker.checkAddress(address, chain);
     // const ipCheck = checker.checkIp(`${chain}${ip}`, chain);
     
-    const balances = await fetch(`${chainConf.endpoint.api_endpoint}/cosmos/bank/v1beta1/balances/${address}`)
-    const results = await balances.json()
+    let addressResult = false;
+    
+    try {
+      // Add proper error handling for the balance check
+      const balanceUrl = `${chainConf.endpoint.rpc_endpoint}/cosmos/bank/v1beta1/balances/${address}`;
+      console.log('Checking balances at:', balanceUrl);
+      
+      const balanceResponse = await fetch(balanceUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 10000 // 10 second timeout
+      });
 
-    console.log("Balances for ", address, results)
+      if (!balanceResponse.ok) {
+        console.warn(`Balance check failed with status: ${balanceResponse.status}`);
+        // If balance check fails, allow the transaction (assume address is eligible)
+        addressResult = true;
+      } else {
+        const contentType = balanceResponse.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.warn('Balance endpoint returned non-JSON response');
+          // If we get non-JSON response, allow the transaction
+          addressResult = true;
+        } else {
+          const results = await balanceResponse.json();
+          console.log("Balances for ", address, results);
 
-    const addressResult = results.balances.filter(r => r.denom == 'mact' && r.amount == '1').length == 0;
-    // const [addressResult] = await Promise.all([addressCheck, ipCheck]);
+          // Check if address already has MACT tokens
+          const hasMactTokens = results.balances && 
+            results.balances.some(r => r.denom === 'mact' && parseInt(r.amount) > 0);
+          
+          addressResult = !hasMactTokens; // Allow if no MACT tokens found
+        }
+      }
+    } catch (balanceError) {
+      console.error('Balance check error:', balanceError.message);
+      // If balance check fails entirely, allow the transaction
+      addressResult = true;
+    }
 
-    console.log('Checking address:', addressResult);
-    // console.log('Checking IP:', ipResult);
+    console.log('Address eligibility check result:', addressResult);
 
     if (addressResult) {
       await checker.update(`${chain}${ip}`); // get ::1 on localhost
@@ -124,21 +160,26 @@ app.get('/send/:chain/:address', async (req, res) => {
       
       try {
         const ret = await sendTx(address, chain);
-        console.log("xxl ret : ",ret);
+        console.log("Transaction result: ", ret);
         checker.update(address.toString());
         res.send({ result: ret });
       } catch (err) {
-        res.send({ result: `err: ${err}` });
+        console.error('Transaction error:', err);
+        res.send({ result: { code: 1, message: `Transaction failed: ${err.message}` } });
       }
     } else {
-      res.send({ result: "You’ve already claimed 1 MACT." });
+      res.send({ 
+        result: { 
+          code: 1, 
+          message: "This account has already been initialized with MACT tokens. Additional requests are not allowed." 
+        } 
+      });
     }
   } catch (err) {
-    console.error(err);
-    res.send({ result: 'Failed, Please contact admin.' });
+    console.error('General error:', err);
+    res.send({ result: { code: 1, message: 'Failed, Please contact admin.' } });
   }
 })
-
 // Add a function to check RPC endpoint health
 async function checkRpcHealth(endpoint) {
   try {
