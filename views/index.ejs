@@ -346,10 +346,10 @@
 
   /* Top row: a perfect center using 1fr auto 1fr */
   .pokt-footer__top {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    column-gap: var(--pokt-gap);
+    display: flex;
+    flex:1;
+    flex-direction: row;
+    justify-content: space-between;
   }
 
   /* Left */
@@ -373,7 +373,7 @@
 
   .pokt-footer__link {
     color: var(--pokt-text);
-    text-decoration: underline;
+    text-decoration: none;
     text-underline-offset: 2px;
     font-size: 16px;
   }
@@ -539,13 +539,8 @@
             <img src="https://pocket.network/wp-content/uploads/2025/01/logo-white.png" alt="Pocket Network" />
           </a>
   
-          <!-- Center: Legal links (stacked) -->
-          <div class="pokt-footer__legal">
-            <a href="https://pocket.network/privacy-policy/" class="pokt-footer__link">Privacy Statement</a>
-            <a href="https://pocket.network/terms-of-use/" class="pokt-footer__link">Terms of Service</a>
-          </div>
   
-          <!-- Right: Social icons (you can replace with your own svgs/images) -->
+          <!-- Center: Social icons (you can replace with your own svgs/images) -->
           <nav class="pokt-footer__social" aria-label="Social links">
             <a href="https://discord.gg/pocket-network" target="new"><i class="fa-brands fa-discord"
                 style="font-size: 2rem;"></i></a>
@@ -554,15 +549,31 @@
             <a href="https://www.linkedin.com/company/pocket-network-foundation/" target="new"><i
                 class="fa-brands fa-linkedin" style="font-size: 2rem;"></i></a>
           </nav>
+  
+          <!-- Right: Legal links (stacked) -->
+          
         </div>
-        <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-top: 1rem;">
+        <div style="display: flex; flex-direction: row; margin-top: 1rem;justify-content: space-between;">
+          <p class="pokt-footer__copy">
+            Powered by <a class="" href="https://stakenodes.org" target="_blank"><img alt="https://stakenodes.org"
+                src="https://stakenodes.org/favicon.png" style="height:1.2rem;" /><span
+                style="font-size: 1rem;">Stakenodes</span></a>
+          </p>
+          <div>
+            <!-- <div style="display: flex;flex: 1;align-self: self-start; font-weight:600;">
+              <p>T&C</p>
+            </div> -->
+            <div class="pokt-footer__nav" style="display: flex;margin: 22px 0 18px;">
+              <a href="https://pocket.network/privacy-policy/" class="pokt-footer__link">Privacy Statement</a>
+              <a href="https://pocket.network/terms-of-use/" class="pokt-footer__link">Terms of Service</a>
+            </div>
+          </div>
+        </div>
+        <div
+          style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-top: 1rem;">
           <!-- Middle: copyright -->
           <div style="display: flex; flex-direction: row; align-items: center;">
-            <p class="pokt-footer__copy">
-              Powered by <a class="" href="https://stakenodes.org" target="_blank"><img alt="https://stakenodes.org"
-                  src="https://stakenodes.org/favicon.png" style="height:1.2rem;" /><span
-                  style="font-size: 1rem;">Stakenodes</span></a>
-            </p>
+  
             <p class="pokt-footer__copy">© <span id="currentYear"></span> Pocket Network. All rights reserved.</p>
           </div>
           <!-- Bottom: nav -->
