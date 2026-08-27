@@ -52,6 +52,7 @@ app.get('/config.json', async (req, res) => {
   project.chains = conf.blockchains.map(x => ({
     id: x.name,
     label: x.label,
+    chainId: x.chainId,
     chainType: x.chainType,
     tokenName: x.tokenName,
     // Scale the raw on-chain amount to the unit users see. This used to divide

@@ -1,561 +1,326 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
   <meta charset="utf-8">
+  <script>
+    // Runs before paint so a stored preference does not flash the default theme.
+    try {
+      var t = localStorage.getItem('faucet-theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Faucet - Pocket Network</title>
   <meta name="robots" content="index, follow">
   <meta name="description" content="Uniform Faucet Tool For Poktroll">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon"
     href="https://pocket.network/wp-content/uploads/2025/01/favicon.png">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    /* ============================================================
+       Tokens and primitives ported from the Pocket Network Explorer
+       (pokt-network/pnf-explorer, app/globals.css) so the faucet and
+       the explorer read as one product. Theme switches via the
+       data-theme attribute on <html>.
+       ============================================================ */
+
+    :root, [data-theme=dark] {
+      --bg-primary:#171c1f; --bg-card:#1e2529; --bg-card-hover:#242c31; --bg-surface:#2a3338;
+      --text-primary:#f6f6f6; --text-secondary:#8e9aa3; --text-tertiary:#5a656d;
+      --border:hsla(0,0%,96%,.08); --border-hover:hsla(0,0%,96%,.15);
+      --star-opacity:1; --grid-dot:hsla(0,0%,96%,.03);
+    }
+    [data-theme=light] {
+      --bg-primary:#f6f6f6; --bg-card:#fff; --bg-card-hover:#f0f0f0; --bg-surface:#e8eaed;
+      --text-primary:#171c1f; --text-secondary:#5a656d; --text-tertiary:#8e9aa3;
+      --border:rgba(23,28,31,.1); --border-hover:rgba(23,28,31,.2);
+      --star-opacity:0; --grid-dot:rgba(23,28,31,.035);
+    }
+    :root {
+      --blue:#025af2; --blue-soft:#4c9bf5; --gold:#ffc547;
+      --mint:#48e5c2; --coral:#ff5a5f; --lavender:#b8b8ff;
+      --radius-card:12px; --radius-lg:16px; --maxw:1200px;
+      --mono:ui-monospace,Menlo,monospace;
     }
 
+    * { box-sizing:border-box; margin:0; padding:0 }
+    html { line-height:1.5; -webkit-font-smoothing:antialiased }
     body {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
+      font-family:'Rubik',ui-sans-serif,system-ui,sans-serif;
+      background-color:var(--bg-primary); color:var(--text-primary);
+      font-size:16px; min-height:100vh; position:relative; overflow-x:hidden;
+      display:flex; flex-direction:column;
+    }
+    a { color:inherit }
+
+    [data-theme=dark] body:before {
+      content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image:radial-gradient(circle,var(--grid-dot) 1px,transparent 0);
+      background-size:24px 24px;
     }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 10vw;
-      background-color: white;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-      flex-shrink: 0;
+    /* ---- ambient atmosphere: the explorer's starfield, glow and rings ---- */
+    .atmosphere { position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0; opacity:var(--star-opacity); transition:opacity .4s ease }
+    .stars {
+      position:absolute; inset:0;
+      background-image:
+        radial-gradient(2px 2px at 20px 30px,rgba(255,255,255,.8),transparent),
+        radial-gradient(2px 2px at 200px 50px,rgba(2,90,242,.8),transparent),
+        radial-gradient(1px 1px at 350px 130px,rgba(255,197,71,.7),transparent),
+        radial-gradient(2px 2px at 500px 100px,rgba(72,229,194,.6),transparent),
+        radial-gradient(1px 1px at 90px 40px,rgba(255,255,255,.9),transparent),
+        radial-gradient(2px 2px at 130px 80px,rgba(255,255,255,.5),transparent),
+        radial-gradient(1px 1px at 250px 160px,rgba(255,255,255,.6),transparent);
+      background-size:550px 200px; animation:twinkle 8s ease-in-out infinite alternate;
+    }
+    .glow {
+      position:fixed; inset:0; pointer-events:none; z-index:0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 15%,rgba(2,90,242,.12) 0%,transparent 50%),
+        radial-gradient(ellipse 60% 40% at 85% 80%,rgba(255,197,71,.07) 0%,transparent 50%);
+    }
+    .ring { position:fixed; border-radius:50%; pointer-events:none; z-index:0 }
+    .ring.r1 { width:900px; height:900px; top:-460px; right:-320px; border:1px solid rgba(2,90,242,.08); animation:orbit 120s linear infinite }
+    .ring.r2 { width:620px; height:620px; bottom:-320px; left:-220px; border:1px solid rgba(255,197,71,.06); animation:orbit 95s linear infinite reverse }
+    [data-theme=light] .glow { opacity:.5 }
+    @keyframes twinkle { 0%{opacity:.5} to{opacity:1} }
+    @keyframes orbit { 0%{transform:rotate(0)} to{transform:rotate(1turn)} }
+    @keyframes pulse { 0%,to{opacity:1} 50%{opacity:.45} }
+    @keyframes spin { to{transform:rotate(1turn)} }
+    .pulse { animation:pulse 2s ease-in-out infinite }
+    @media (prefers-reduced-motion: reduce) {
+      .stars,.ring,.pulse { animation:none!important }
+      * { scroll-behavior:auto!important }
     }
 
-    header img {
-      max-width: 200px;
-      height: auto;
+    /* ---- shell ---- */
+    .shell { position:relative; z-index:2; flex:1; display:flex; flex-direction:column }
+    header.bar { max-width:var(--maxw); margin:0 auto; width:100%; padding:22px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px }
+    .brand { display:flex; align-items:center; gap:11px; text-decoration:none }
+    .brand-logo { height:26px; width:auto; flex:none; display:block }
+    .brand-logo-light { display:none }
+    [data-theme=light] .brand-logo-dark { display:none }
+    [data-theme=light] .brand-logo-light { display:block }
+    .brand .sub { font-size:13px; font-weight:500; color:var(--text-secondary); padding-left:12px; margin-left:2px; border-left:1px solid var(--border) }
+    .bar-right { display:flex; align-items:center; gap:12px }
+    .bar-nav { display:flex; gap:20px }
+    .bar-nav a { font-size:13.5px; color:var(--text-secondary); text-decoration:none; transition:color .15s ease }
+    .bar-nav a:hover, .bar-nav a.active { color:var(--blue-soft) }
+    .iconbtn { width:40px; height:40px; display:grid; place-items:center; border-radius:10px; background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border); cursor:pointer; transition:all .2s ease; font-size:15px }
+    .iconbtn:hover { color:var(--text-primary); border-color:var(--border-hover) }
+    .netbadge { display:flex; align-items:center; gap:8px; height:40px; padding:0 13px; border-radius:10px; background:var(--bg-card); border:1px solid var(--border); font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap }
+    .netbadge .dot { width:8px; height:8px; border-radius:50%; flex:none }
+    @media(max-width:640px){ .bar-nav{display:none} }
+
+    main { max-width:760px; margin:0 auto; width:100%; padding:20px 24px 56px; flex:1 }
+
+    /* ---- hero ---- */
+    .hero { padding:18px 0 26px; text-align:center }
+    .hero h1 { font-size:30px; font-weight:600; letter-spacing:-.02em; margin-bottom:6px }
+    .hero h1 .accent { color:var(--blue-soft) }
+    .hero p { color:var(--text-secondary); font-size:15px }
+
+    /* ---- card ---- */
+    .card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-card); transition:all .2s ease }
+    .faucet-card { padding:24px }
+    .faucet-card.is-error { border-color:rgba(255,90,95,.5) }
+    .faucet-card.is-success { border-color:rgba(72,229,194,.45) }
+
+    /* ---- chips: the explorer's network picker ---- */
+    .chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:18px }
+    .chip { padding:6px 14px; border-radius:9999px; font-size:.8rem; font-weight:500; background:var(--bg-surface); color:var(--text-secondary); border:1px solid var(--border); transition:all .15s ease; cursor:pointer; font-family:inherit }
+    .chip:hover { border-color:var(--border-hover); color:var(--text-primary) }
+    .chip.active { background:var(--blue); color:#fff; border-color:var(--blue) }
+    .chip:focus-visible, .btn-primary:focus-visible, .iconbtn:focus-visible, .copybtn:focus-visible,
+    .request input:focus-visible, footer .rt a:focus-visible, .bar-nav a:focus-visible, .brand:focus-visible {
+      outline:2px solid var(--blue); outline-offset:2px;
     }
 
-    header nav {
-      gap: 20px;
-      display: flex;
+    /* ---- request row ---- */
+    .request { display:flex; gap:10px; flex-wrap:wrap }
+    .request input {
+      flex:1; min-width:240px; padding:10px 14px; border-radius:10px; font-size:13px; font-family:var(--mono);
+      background:var(--bg-primary); color:var(--text-primary); border:1px solid var(--border); outline:none; transition:border-color .15s ease;
     }
-
-    header nav a {
-      color: #171c1fa6;
-      text-decoration: none;
-      font-weight: 400;
-      font-size: 18px;
+    .request input::placeholder { font-family:'Rubik',sans-serif; color:var(--text-tertiary) }
+    .request input:focus { border-color:var(--blue) }
+    .btn-primary {
+      height:42px; padding:0 20px; border-radius:10px; border:1px solid var(--blue); background:var(--blue); color:#fff;
+      font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; transition:all .2s ease; white-space:nowrap;
     }
+    .btn-primary:hover:not(:disabled) { background:#0148c4; border-color:#0148c4 }
+    .btn-primary:disabled { background:var(--bg-surface); border-color:var(--border); color:var(--text-tertiary); cursor:not-allowed }
 
-    header nav a:hover {
-      color: #698DFF;
-    }
+    /* ---- stat strip: the explorer's uppercase label + dot idiom ---- */
+    .facts { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius-card); overflow:hidden; margin-top:18px }
+    .fact { background:var(--bg-card); padding:14px 16px }
+    .fact .label { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.05em; color:var(--text-tertiary); display:flex; align-items:center; gap:7px }
+    .fact .label .dot { width:7px; height:7px; border-radius:50%; flex:none }
+    .fact .val { font-size:17px; font-weight:600; margin-top:6px; letter-spacing:-.02em; font-variant-numeric:tabular-nums }
+    .fact .val.mono { font-family:var(--mono); font-size:13px; font-weight:500; word-break:break-all }
+    .fact .val .unit { font-size:12.5px; font-weight:500; color:var(--text-secondary); margin-left:4px }
+    @media(max-width:560px){ .facts{grid-template-columns:1fr} }
 
-    header nav a.active {
-      color: #698DFF;
-    }
+    /* ---- result banner ---- */
+    .result { border-radius:10px; padding:12px 14px; font-size:13.5px; margin-bottom:16px; border:1px solid transparent; word-break:break-word }
+    .result.err { background:rgba(255,90,95,.1); border-color:rgba(255,90,95,.3); color:var(--coral) }
+    .result.ok { background:rgba(72,229,194,.09); border-color:rgba(72,229,194,.3); color:var(--mint) }
+    .result .mono { font-family:var(--mono); font-size:12.5px; word-break:break-all }
+    .result a { color:inherit; text-decoration:underline }
+    .copybtn { background:none; border:1px solid currentColor; color:inherit; border-radius:6px; font-size:11px; font-family:inherit; padding:2px 8px; margin-left:8px; cursor:pointer }
 
-    .pill {
-      display: inline-block;
-      padding: 0.5em 1em;
-      font-size: 0.9rem;
-      font-weight: bold;
-      color: #ffffff;
-      background-color: #007bff;
-      border-radius: 20px;
-      text-transform: uppercase;
-      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-      margin-left: 5px;
-    }
-
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background-position: 70vw center;
-      background-repeat: no-repeat;
-      gap: 20px;
-      padding: 20px;
-      min-height: calc(100vh - 120px);
-    }
-
-    .faucet-card {
-      width: 50vw;
-      border: 3px solid #d99e20;
-      border-radius: 8px;
-      padding: 15px;
-      text-align: center;
-      background-color: #ffffff;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .faucet-card.faucet-error {
-      border-color: #e03834 !important;
-    }
-
-    .faucet-card.faucet-success {
-      border-color: #6ac136 !important;
-    }
-
-    .faucet-card img {
-      height: 100px;
-      margin-bottom: 15px;
-    }
-
-    .faucet-card h1 {
-      font-weight: 700;
-      font-size: 22px;
-      margin-bottom: 10px;
-      color: #333;
-    }
-
-    .faucet-card p {
-      margin-bottom: 20px;
-      color: #444;
-      font-size: 14px;
-    }
-
-    .form-control {
-      height: 40px;
-      border-radius: 6px;
-      font-size: 14px;
-      border: 1px solid #ddd;
-    }
-
-    .form-control:focus {
-      border-color: #698DFF;
-      box-shadow: 0 0 8px rgba(105, 141, 255, 0.3);
-    }
-
-    .network-picker {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 18px;
-    }
-
-    .network-option {
-      background-color: #fff;
-      color: #171c1fa6;
-      border: 1px solid #dfe3e6;
-      border-radius: 20px;
-      padding: 6px 16px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.15s, color 0.15s, border-color 0.15s;
-    }
-
-    .network-option:hover {
-      border-color: #f1b405;
-      color: #171c1f;
-    }
-
-    .network-option.active {
-      background-color: #f1b405;
-      border-color: #f1b405;
-      color: #000;
-      font-weight: 700;
-    }
-
-    .btn-yellow {
-      background-color: #f1b405;
-      color: #000;
-      font-weight: bold;
-      height: 40px;
-      border-radius: 6px;
-      padding: 0 15px;
-      border: none;
-      font-size: 14px;
-    }
-
-    .btn-yellow:hover {
-      background-color: #d99e04;
-    }
-
-    .btn-yellow:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-
-    .error-alert {
-      background-color: #dc3545;
-      color: white;
-      font-size: 14px;
-      padding: 8px 12px;
-      border-radius: 6px 6px 0 0;
-      text-align: center;
-      border: none;
-      margin: -15px -15px 15px -15px;
-    }
-
-    .success-alert {
-      background-color: #6ac136;
-      color: #fff;
-      font-size: 14px;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px 6px 0 0;
-      text-align: center;
-      margin: -15px -15px 15px -15px;
-    }
-
-    .faq-container {
-      width: 50vw;
-    }
-
-    .faq-header {
-      text-align: center;
-      font-weight: 600;
-      font-size: 18px;
-      margin: 10px 0;
-      color: #333;
-    }
-
-    .faq-wrapper {
-      background-color: #10249c;
-      padding: 15px;
-      border-radius: 8px;
-    }
-
-    .accordion-item {
-      background-color: transparent;
-      border: none;
-      border-radius: 6px !important;
-      margin-bottom: 5px;
-    }
-
+    /* ---- FAQ ---- */
+    .faq { margin-top:34px }
+    .faq h2 { font-size:16px; font-weight:600; letter-spacing:-.01em; margin-bottom:14px; color:var(--text-primary) }
+    .accordion-item { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-card)!important; margin-bottom:8px; overflow:hidden }
     .accordion-button {
-      background-color: transparent;
-      color: #ffffff;
-      border: none;
-      font-weight: 600;
-      font-size: 14px;
-      padding: 10px 15px;
-      border-radius: 6px;
+      background:transparent; color:var(--text-primary); border:none; font-family:inherit;
+      font-weight:500; font-size:14px; padding:14px 18px; box-shadow:none!important;
     }
+    .accordion-button:not(.collapsed) { background:var(--bg-card-hover); color:var(--text-primary) }
+    .accordion-button:focus-visible { outline:2px solid var(--blue); outline-offset:-2px }
+    [data-theme=dark] .accordion-button::after { filter:invert(1) opacity(.6) }
+    .accordion-body { background:transparent; color:var(--text-secondary); font-size:13.5px; padding:0 18px 16px }
+    .accordion-body a { color:var(--blue-soft); text-decoration:none }
+    .accordion-body a:hover { text-decoration:underline }
 
-    .accordion-button:not(.collapsed) {
-      background-color: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
-    }
+    /* ---- footer ---- */
+    footer { position:relative; z-index:2; max-width:var(--maxw); margin:20px auto 0; width:100%; padding:24px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px }
+    footer .lf { font-size:13px; color:var(--text-tertiary) }
+    footer .rt { display:flex; gap:20px; flex-wrap:wrap }
+    footer .rt a { font-size:13px; color:var(--text-secondary); text-decoration:none }
+    footer .rt a:hover { color:var(--blue-soft) }
 
-    .accordion-button::after {
-      filter: invert(1);
-    }
-
-    .accordion-body {
-      background-color: transparent;
-      color: #dcdcdc;
-      font-size: 13px;
-      padding: 10px 15px;
-    }
-
-    .accordion-body a {
-      color: #fff;
-      text-decoration: underline;
-    }
-
-    footer {
-      background-color: #10249c;
-      color: white;
-      padding: 15px 10vw;
-      flex-shrink: 0;
-    }
-
-    footer .logo {
-      height: 25px;
-    }
-
-    footer a {
-      color: #dcdcdc;
-      text-decoration: none;
-      margin-right: 15px;
-      font-size: 12px;
-    }
-
-    .footer-links {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .footer-legal {
-      font-size: 11px;
-      color: #aaa;
-    }
-
-    .footer-nav {
-      display: flex;
-      flex-wrap: wrap;
-    }
-
-    .footer-nav a {
-      margin-right: 10px;
-      font-size: 12px;
-    }
-
+    /* ---- processing toast ---- */
     .processing-bar {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-      z-index: 1000;
+      position:fixed; bottom:20px; right:20px; z-index:1000;
+      background:var(--bg-card); border:1px solid var(--border); color:var(--text-secondary);
+      padding:11px 16px; border-radius:10px; font-size:13px; box-shadow:0 8px 28px rgba(0,0,0,.28);
+      display:flex; align-items:center; gap:9px;
     }
+    .processing-bar .dot { width:7px; height:7px; border-radius:50%; background:var(--gold); flex:none }
 
-    /* Mobile responsiveness */
-    @media (max-width: 768px) {
-      header {
-        padding: 12px 5vw;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      header nav {
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-
-      .faucet-card,
-      .faq-container {
-        width: 90vw;
-      }
-
-      .main-content {
-        padding: 10px;
-      }
-
-      footer {
-        padding: 15px 5vw;
-      }
-
-      .d-flex.gap-2 {
-        flex-direction: column !important;
-        gap: 10px !important;
-      }
-
-      .form-control {
-        width: 100% !important;
-      }
+    @media(max-width:560px){
+      .hero h1 { font-size:24px }
+      header.bar { padding:16px }
+      .request input { min-width:0 }
     }
-
-  /* ===== Pocket-style Footer (responsive, grid-aligned) ===== */
-  :root {
-    --pokt-bg: #0d2fb8;
-    /* adjust if you need an exact blue */
-    --pokt-text: #ffffff;
-    --pokt-text-dim: rgba(255, 255, 255, .85);
-    --pokt-max: 1200px;
-    --pokt-gap: 24px;
-  }
-
-  .pokt-footer {
-    background: var(--pokt-bg);
-    color: var(--pokt-text);
-    padding: 56px 16px 28px;
-    /* font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; */
-  }
-
-  .pokt-footer__inner {
-    max-width: var(--pokt-max);
-    margin: 0 auto;
-  }
-
-  /* Top row: a perfect center using 1fr auto 1fr */
-  .pokt-footer__top {
-    display: flex;
-    flex:1;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  /* Left */
-  .pokt-footer__brand img {
-    display: block;
-    height: 44px;
-    /* tweak to match your logo */
-    width: auto;
-  }
-
-  /* Center */
-  .pokt-footer__legal {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* keep stacked links centered */
-    gap: 8px;
-    justify-self: center;
-    /* keep the block in the middle column centered */
-  }
-
-  .pokt-footer__link {
-    color: var(--pokt-text);
-    text-decoration: none;
-    text-underline-offset: 2px;
-    font-size: 16px;
-  }
-
-  /* Right */
-  .pokt-footer__social {
-    display: flex;
-    gap: 20px;
-    justify-self: end;
-    /* pin to the right edge of the grid */
-    align-items: center;
-  }
-
-  .pokt-footer__social a img {
-    width: 24px;
-    height: 24px;
-    display: block;
-  }
-
-  /* Middle */
-  .pokt-footer__copy {
-    margin: 22px 0 18px;
-    text-align: center;
-    font-size: 0.95rem;
-    color: var(--pokt-text-dim);
-  }
-
-  /* Bottom nav */
-  .pokt-footer__nav {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 18px 24px;
-  }
-
-  .pokt-footer__nav a {
-    color: var(--pokt-text);
-    text-decoration: none;
-    font-size: 0.98rem;
-  }
-
-  .pokt-footer__nav a:hover,
-  .pokt-footer__nav a:focus {
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  /* ===== Responsive ===== */
-  @media (max-width: 900px) {
-    .pokt-footer {
-      padding: 40px 16px 24px;
-    }
-
-    .pokt-footer__top {
-      grid-template-columns: 1fr;
-      /* stack */
-      row-gap: 20px;
-      justify-items: center;
-      /* center all stacked items */
-      text-align: center;
-    }
-
-    .pokt-footer__brand {
-      justify-self: start;
-      /* optional: keep logo left on tablet */
-      justify-self: center;
-      /* or center it: choose one */
-    }
-
-    .pokt-footer__social {
-      justify-self: center;
-      /* center socials on small screens */
-    }
-  }
   </style>
 </head>
 
 <body>
   <div id="app">
-    <header>
-      <div class="d-flex align-items-center">
-        <img id="logo" src="logo1.png" :alt="logoAlt">
-        <div class="pill" :style="`display: ${!selected.isBeta ? 'none' : ''}`">beta</div>
-      </div>
-      <nav>
-        <a :class="[path === '/' ? 'active':'']" href="#">Home</a>
-        <a href="https://pocket.network" target="_blank">About</a>
-        <a href="https://pocket.network/news/" target="_blank">Blog</a>
-        <a href="https://docs.pokt.network/" target="_blank">Docs</a>
-      </nav>
-    </header>
+    <!-- ambient layers, matching the explorer -->
+    <div class="atmosphere"><div class="stars"></div></div>
+    <div class="glow"></div>
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
 
-    <div class="main-content" :style="{ backgroundImage: `url(image.png)` }">
-      <div class="faucet-card" :class="{ 'faucet-error': showError, 'faucet-success': showSuccess }">
-        <div v-if="showAlert" v-html="alertMessage"></div>
-        <img :src="bannerImage" alt="Faucet Icon" />
-        <h1>POCKET {{ selected.chainType }} FAUCET</h1>
-        <p>
-          Get free {{ selected.tokenName }} to initialize your Shannon account and start your journey on the network
-        </p>
-        <div class="network-picker" v-if="chains.length > 1">
-          <button
-            v-for="c in chains"
-            :key="c.id"
-            type="button"
-            class="network-option"
-            :class="{ active: c.id === chain }"
-            @click="selectChain(c.id)"
-          >{{ c.label }} &middot; {{ c.tokenName }}</button>
-        </div>
-        <div class="d-flex justify-content-center gap-2">
-          <input 
-            id="address" 
-            class="form-control" 
-            style="width: 70%"
-            placeholder="Enter your wallet address" 
-            v-model="address" 
-            name="address" 
-          />
-          <button 
-            type="button" 
-            class="btn-yellow" 
-            @click="requestToken(this)"
-            :disabled="isProcessing"
-          >
-            <span v-if="!isProcessing">Send {{ selected.txAmount }} {{ selected.tokenName }}</span>
-            <span v-else>Processing...</span>
+    <div class="shell">
+      <header class="bar">
+        <a class="brand" href="/" :aria-label="logoAlt">
+          <img class="brand-logo brand-logo-dark" src="pocket-logo-white.svg" alt="Pocket Network">
+          <img class="brand-logo brand-logo-light" src="pocket-logo-black.svg" alt="Pocket Network">
+          <span class="sub">Faucet</span>
+        </a>
+        <div class="bar-right">
+          <nav class="bar-nav">
+            <a href="https://pocket.network" target="_blank" rel="noopener">About</a>
+            <a href="https://explorer.pocket.network/" target="_blank" rel="noopener">Explorer</a>
+            <a href="https://docs.pocket.network/" target="_blank" rel="noopener">Docs</a>
+          </nav>
+          <span class="netbadge" v-if="selected.label">
+            <span class="dot" :style="{ background: selected.isBeta ? 'var(--gold)' : 'var(--mint)' }"></span>
+            {{ selected.label }}
+          </span>
+          <button class="iconbtn" type="button" @click="toggleTheme" :aria-label="`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`">
+            <span aria-hidden="true">{{ theme === 'dark' ? '☀' : '☾' }}</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      <div class="faq-container">
-        <h4 class="faq-header">Frequently Asked Questions (FAQs)</h4>
-        <div class="faq-wrapper">
+      <main>
+        <div class="hero">
+          <h1>Pocket <span class="accent">{{ selected.label || 'Network' }}</span> Faucet</h1>
+          <p>Get free {{ selected.tokenName }} to initialize your Shannon account.</p>
+        </div>
+
+        <div class="card faucet-card" :class="{ 'is-error': showError, 'is-success': showSuccess }">
+          <div v-if="showAlert" class="result" :class="showError ? 'err' : 'ok'" v-html="alertMessage"></div>
+
+          <div class="chips" v-if="chains.length > 1">
+            <button
+              v-for="c in chains"
+              :key="c.id"
+              type="button"
+              class="chip"
+              :class="{ active: c.id === chain }"
+              @click="selectChain(c.id)"
+            >{{ c.label }} &middot; {{ c.tokenName }}</button>
+          </div>
+
+          <div class="request">
+            <input
+              id="address"
+              type="text"
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="Enter your wallet address"
+              v-model="address"
+              name="address"
+              @keyup.enter="!isProcessing && requestToken(this)"
+            />
+            <button
+              type="button"
+              class="btn-primary"
+              @click="requestToken(this)"
+              :disabled="isProcessing || !address"
+            >
+              <span v-if="!isProcessing">Send {{ selected.txAmount }} {{ selected.tokenName }}</span>
+              <span v-else>Sending…</span>
+            </button>
+          </div>
+
+          <div class="facts">
+            <div class="fact">
+              <div class="label"><span class="dot" style="background:var(--blue)"></span>You receive</div>
+              <div class="val">{{ selected.txAmount }}<span class="unit">{{ selected.tokenName }}</span></div>
+            </div>
+            <div class="fact">
+              <div class="label"><span class="dot" style="background:var(--lavender)"></span>Chain</div>
+              <div class="val mono chainid">{{ selected.chainId }}</div>
+            </div>
+            <div class="fact">
+              <div class="label"><span class="dot" style="background:var(--gold)"></span>Limit</div>
+              <div class="val" v-if="selected.oneTimeOnly">Once<span class="unit">per address</span></div>
+              <div class="val" v-else>{{ selected.limitAddress }}<span class="unit">per {{ selected.limitHours }}h</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq">
+          <h2>Frequently asked questions</h2>
           <div class="accordion" id="faqAccordion">
             <div v-for="(FAQ, index) in FAQs" class="accordion-item" :key="FAQ.id">
-              <h2 class="accordion-header" :id="FAQ.id">
-                <button 
-                  class="accordion-button collapsed" 
-                  type="button" 
+              <h3 class="accordion-header" :id="FAQ.id">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
                   data-bs-toggle="collapse"
-                  :data-bs-target="'#' + FAQ.id2" 
+                  :data-bs-target="'#' + FAQ.id2"
                   :aria-expanded="index === 0 ? 'true' : 'false'"
                   :aria-controls="FAQ.id2"
                 >
                   {{ FAQ.question }}
                 </button>
-              </h2>
-              <div 
-                :id="FAQ.id2" 
+              </h3>
+              <div
+                :id="FAQ.id2"
                 :class="['accordion-collapse', 'collapse', index === 0 ? 'show' : '']"
                 :aria-labelledby="FAQ.id"
                 data-bs-parent="#faqAccordion"
@@ -565,71 +330,24 @@
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
 
     <div id="processing-bar" class="processing-bar" v-if="isProcessing">
-      <span>We'll notify you shortly. Transaction processing...</span>
+      <span class="dot pulse"></span>
+      <span>Transaction processing. This can take a few seconds.</span>
     </div>
 
-    <footer class="pokt-footer" role="contentinfo">
-      <div class="pokt-footer__inner">
-        <!-- Top row: logo | legal | social -->
-        <div class="pokt-footer__top">
-          <!-- Left: Logo -->
-          <a class="pokt-footer__brand" href="/" aria-label="Pocket Network">
-            <img src="https://pocket.network/wp-content/uploads/2025/01/logo-white.png" alt="Pocket Network" />
-          </a>
-  
-  
-          <!-- Center: Social icons (you can replace with your own svgs/images) -->
-          <nav class="pokt-footer__social" aria-label="Social links">
-            <a href="https://discord.gg/pocket-network" target="new"><i class="fa-brands fa-discord"
-                style="font-size: 2rem;"></i></a>
-            <a href="https://x.com/POKTnetwork" target="new"><i class="fa-brands fa-twitter"
-                style="font-size: 2rem;"></i></a>
-            <a href="https://www.linkedin.com/company/pocket-network-foundation/" target="new"><i
-                class="fa-brands fa-linkedin" style="font-size: 2rem;"></i></a>
-          </nav>
-  
-          <!-- Right: Legal links (stacked) -->
-          
-        </div>
-        <div style="display: flex; flex-direction: row; margin-top: 1rem;justify-content: space-between;">
-          <p class="pokt-footer__copy">
-            Powered by <a class="" href="https://stakenodes.org" target="_blank"><img alt="https://stakenodes.org"
-                src="https://stakenodes.org/favicon.png" style="height:1.2rem;" /><span
-                style="font-size: 1rem;">Stakenodes</span></a>
-          </p>
-          <div>
-            <!-- <div style="display: flex;flex: 1;align-self: self-start; font-weight:600;">
-              <p>T&C</p>
-            </div> -->
-            <div class="pokt-footer__nav" style="display: flex;margin: 22px 0 18px;">
-              <a href="https://pocket.network/privacy-policy/" class="pokt-footer__link">Privacy Statement</a>
-              <a href="https://pocket.network/terms-of-use/" class="pokt-footer__link">Terms of Service</a>
-            </div>
-          </div>
-        </div>
-        <div
-          style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-top: 1rem;">
-          <!-- Middle: copyright -->
-          <div style="display: flex; flex-direction: row; align-items: center;">
-  
-            <p class="pokt-footer__copy">© <span id="currentYear"></span> Pocket Network. All rights reserved.</p>
-          </div>
-          <!-- Bottom: nav -->
-          <nav class="pokt-footer__nav" aria-label="Footer">
-            <a target="_blank" href="https://forum.pokt.network/">Forum</a>
-            <a target="_blank" href="https://explorer.pocket.network/">Explorer</a>
-            <a target="_blank" href="https://docs.pokt.network/">Docs</a>
-            <a target="_blank" href="https://pocket.network/press-kit/">Press Kit</a>
-            <a target="_blank" href="https://github.com/pokt-network">GitHub</a>
-            <a target="_blank" href="https://wallet.pocket.network/">Wallet</a>
-            <a target="_blank" href="https://coinmarketcap.com/currencies/pocket-network/markets/">Buy</a>
-          </nav>
-        </div>
-      </div>
+    <footer role="contentinfo">
+      <div class="lf">© <span id="currentYear"></span> Pocket Network</div>
+      <nav class="rt" aria-label="Footer">
+        <a href="https://forum.pokt.network/" target="_blank" rel="noopener">Forum</a>
+        <a href="https://explorer.pocket.network/" target="_blank" rel="noopener">Explorer</a>
+        <a href="https://docs.pocket.network/" target="_blank" rel="noopener">Docs</a>
+        <a href="https://github.com/pokt-network" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://pocket.network/privacy-policy/" target="_blank" rel="noopener">Privacy</a>
+        <a href="https://pocket.network/terms-of-use/" target="_blank" rel="noopener">Terms</a>
+      </nav>
     </footer>
   </div>
 
@@ -642,6 +360,7 @@
     createApp({
       data() {
         return {
+          theme: document.documentElement.getAttribute('data-theme') || 'dark',
           address: '',
           chain: '',
           chains: [],
@@ -649,7 +368,6 @@
           balance: {},
           path: window.location.pathname,
           isProcessing: false,
-          bannerImage: 'img.png',
           showAlert: false,
           alertMessage: '',
           showError: false,
@@ -721,7 +439,7 @@
         // keeps the first render safe while config.json is still in flight.
         selected() {
           return this.chains.find(c => c.id === this.chain) || {
-            label: '', chainType: '', tokenName: '', txAmount: '',
+            label: '', chainId: '', chainType: '', tokenName: '', txAmount: '',
             limitAddress: '', limitHours: '', isBeta: false, oneTimeOnly: false,
           }
         },
@@ -743,6 +461,12 @@
         }
       },
       methods: {
+        toggleTheme() {
+          this.theme = this.theme === 'dark' ? 'light' : 'dark'
+          document.documentElement.setAttribute('data-theme', this.theme)
+          // Wrapped because storage access throws outright in some privacy modes.
+          try { localStorage.setItem('faucet-theme', this.theme) } catch {}
+        },
         selectChain(id) {
           if (id === this.chain) return
           this.chain = id
@@ -796,12 +520,7 @@
                 const message = (data && (data.message || (data.result && data.result.message))) || `Request failed with status ${response.status}`;
                 this.showError = true;
                 this.showSuccess = false;
-                this.bannerImage = 'image2.png';
-                this.alertMessage = `
-                  <div class="error-alert">
-                    ${message}
-                  </div>
-                `;
+                this.alertMessage = message;
                 this.showAlert = true;
                 return;
               }
@@ -812,10 +531,7 @@
               if (typeof result === 'string') {
                 this.showError = true;
                 this.showSuccess = false;
-                this.bannerImage = 'image2.png';
-                this.alertMessage = `
-                  <div class=\"error-alert\">${result}</div>
-                `;
+                this.alertMessage = result;
                 this.showAlert = true;
                 return;
               }
@@ -826,44 +542,30 @@
               if (code !== 0) {
                 this.showError = true;
                 this.showSuccess = false;
-                this.bannerImage = 'image2.png';
-                this.alertMessage = `
-                  <div class="error-alert">
-                    ${result.message || 'Request failed. Please try again later.'}
-                  </div>
-                `;
+                this.alertMessage = result.message || 'Request failed. Please try again later.';
                 this.showAlert = true;
                 return;
               }
 
               // Success UI with copy-to-clipboard button when we have a hash
-              const copyHtml = txHash ? 'Hash: <code>' + txHash + '</code> <button class="btn btn-light btn-sm ms-2" onclick="copyToClipboard(\'' + txHash + '\')">Copy</button>' : '';
+              const copyHtml = txHash
+                ? ' <span class="mono">' + txHash + '</span><button class="copybtn" type="button" onclick="copyToClipboard(\'' + txHash + '\')">Copy</button>'
+                : '';
               this.showSuccess = true;
-              this.bannerImage = 'image3.png';
               this.showError = false;
-              this.alertMessage = `
-                <div class="success-alert">
-                  Success! Transaction sent. ${copyHtml}
-                </div>
-              `;
+              this.alertMessage = `Sent.${copyHtml}`;
               this.showAlert = true;
             }).catch(error => {
               this.isProcessing = false;
               obj.disabled = false;
               this.showError = true;
-              this.bannerImage = 'image2.png';
-              this.alertMessage = `
-                <div class="error-alert">
-                  Error: ${error.message || 'Something went wrong'}
-                </div>
-              `;
+              this.alertMessage = error.message || 'Something went wrong';
               this.showAlert = true;
             });
           } else {
             obj.disabled = false;
             this.showError = true;
-            this.alertMessage = '<div class="error-alert">Please enter a wallet address</div>';
-            this.bannerImage = 'image2.png';
+            this.alertMessage = 'Enter a wallet address to continue.';
             this.showAlert = true;
           }
         }
