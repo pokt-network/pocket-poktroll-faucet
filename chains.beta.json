@@ -31,7 +31,7 @@
     "apiEndpoint": "https://sauron-api.beta.infra.pocket.network",
     "bech32Prefix": "pokt",
     "txDenom": "upokt",
-    "txAmount": "10000000000",
+    "txAmount": "100000000000",
     "tokenDecimals": 6,
     "txFeeDenom": "upokt",
     "txFeeAmount": "200",
