@@ -130,6 +130,7 @@
     .faucet-card { padding:24px }
     .faucet-card.is-error { border-color:rgba(255,90,95,.5) }
     .faucet-card.is-success { border-color:rgba(72,229,194,.45) }
+    .faucet-card.is-pending { border-color:rgba(255,197,71,.45) }
 
     /* ---- chips: the explorer's network picker ---- */
     .chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:18px }
@@ -173,6 +174,8 @@
     .result { border-radius:10px; padding:12px 14px; font-size:13.5px; margin-bottom:16px; border:1px solid transparent; word-break:break-word }
     .result.err { background:rgba(255,90,95,.1); border-color:rgba(255,90,95,.3); color:var(--coral) }
     .result.ok { background:rgba(72,229,194,.09); border-color:rgba(72,229,194,.3); color:var(--mint) }
+    /* Submitted but not yet in a block: informational, not a failure. */
+    .result.pending { background:rgba(255,197,71,.1); border-color:rgba(255,197,71,.35); color:var(--gold) }
     .result .mono { font-family:var(--mono); font-size:12.5px; word-break:break-all }
     .result a { color:inherit; text-decoration:underline }
     .copybtn { background:none; border:1px solid currentColor; color:inherit; border-radius:6px; font-size:11px; font-family:inherit; padding:2px 8px; margin-left:8px; cursor:pointer }
@@ -253,8 +256,8 @@
           <p>Get free {{ selected.tokenName }} to initialize your Shannon account.</p>
         </div>
 
-        <div class="card faucet-card" :class="{ 'is-error': showError, 'is-success': showSuccess }">
-          <div v-if="showAlert" class="result" :class="showError ? 'err' : 'ok'" v-html="alertMessage"></div>
+        <div class="card faucet-card" :class="{ 'is-error': showError, 'is-success': showSuccess, 'is-pending': showPending }">
+          <div v-if="showAlert" class="result" :class="showError ? 'err' : (showPending ? 'pending' : 'ok')" v-html="alertMessage"></div>
 
           <div class="chips" v-if="chains.length > 1">
             <button
@@ -375,6 +378,7 @@
           alertMessage: '',
           showError: false,
           showSuccess: false,
+          showPending: false,
           FAQs: [
             {
               "question": "What is a faucet?",
@@ -478,6 +482,7 @@
           this.showAlert = false
           this.showError = false
           this.showSuccess = false
+          this.showPending = false
           this.alertMessage = ''
           this.applyChain()
           this.onChange()
@@ -503,6 +508,7 @@
             this.showAlert = false;
             this.showError = false;
             this.showSuccess = false;
+            this.showPending = false;
             obj.disabled = true;
 
             fetch(`send/${this.chain}/${this.address}`).then(async response => {
@@ -540,6 +546,21 @@
               }
               const code = typeof result.code === 'number' ? result.code : 0;
               const txHash = result.txhash || result.hash || '';
+
+              // Submitted but not yet in a block. Expected whenever a block is
+              // slower than the broadcast timeout, so it must not read as a
+              // failure: the tokens are very likely on their way, and telling
+              // the user it failed invites a retry they do not need.
+              if (result.status === 'PENDING' && txHash) {
+                this.showError = false;
+                this.showSuccess = false;
+                this.showPending = true;
+                this.alertMessage = 'Submitted. Waiting to appear in a block, which can take a minute.'
+                  + ' <span class="mono">' + txHash + '</span>'
+                  + '<button class="copybtn" type="button" onclick="copyToClipboard(\'' + txHash + '\')">Copy</button>';
+                this.showAlert = true;
+                return;
+              }
 
               // If backend signals error via result.code, treat as error
               if (code !== 0) {

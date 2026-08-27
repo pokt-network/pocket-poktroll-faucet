@@ -197,6 +197,10 @@ app.get('/send/:chain/:address', async (req, res) => {
     try {
       const ret = await sendTx(address, chain);
       console.log("Transaction result: ", ret);
+      // Deliberately no refund when the result is PENDING. The transaction was
+      // accepted by the node and may still be included, so handing the quota
+      // back would let a retry produce a second grant on any chain without a
+      // once-ever gate.
       res.send({ result: ret });
     } catch (err) {
       console.error('Transaction error:', err);
@@ -401,26 +405,27 @@ async function sendCosmosTx(recipient, chain) {
 
     } catch (error) {
       console.error('Transaction failed:', error);
-      
-      // More detailed error handling
-      if (error.message && error.message.includes('timeout') && error.txId) {
-        console.log(`Transaction was submitted with ID ${error.txId} but confirmation timed out.`);
-        console.log(`The transaction might still be processed. Check the explorer for tx: ${error.txId}`);
-        
-        // Return partial success since tx was submitted
+
+      // A broadcast that was accepted but not yet seen in a block. cosmjs
+      // raises TimeoutError, whose only reliable marker is txId; its message
+      // reads "was submitted but was not yet found on the chain" and contains
+      // no word this could match on. Matching the text instead of txId is why
+      // this branch never fired, so a submitted transaction was reported to the
+      // user as an outright failure.
+      if (error.txId) {
+        console.log(`Submitted ${error.txId} but it was not in a block before the timeout; it may still land.`);
         return {
-          code: 1, // Non-zero but not a complete failure
+          code: 1,
           status: "PENDING",
-          message: "Transaction was submitted but confirmation timed out. It may still be processed.",
+          message: "Transaction submitted. It has not appeared in a block yet, which is normal when blocks are slow.",
           txhash: error.txId
         };
-      } else if (error.message && error.message.includes('timeout')) {
-        throw new Error(`Connection to blockchain node timed out. Please try again later or contact admin if the issue persists.`);
-      } else if (error.message && error.message.includes('failed')) {
-        throw new Error(`Failed to connect to blockchain node. The node may be offline or unreachable.`);
-      } else {
-        throw new Error(`Transaction failed: ${error.message}`);
       }
+
+      if (error.message && error.message.includes('failed')) {
+        throw new Error(`Failed to connect to blockchain node. The node may be offline or unreachable.`);
+      }
+      throw new Error(`Transaction failed: ${error.message}`);
     }
   }
   throw new Error(`Blockchain Config [${chain}] not found`);
