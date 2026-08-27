@@ -1,0 +1,113 @@
+name: Build and publish image
+
+# Triggered by hand so a branch can be built and deployed on demand.
+# Pick the branch or tag in the "Use workflow from" dropdown when running it;
+# the image is tagged with that ref, so beta can run a branch build while
+# main stays untouched.
+on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: Target platforms
+        type: choice
+        default: linux/amd64
+        options:
+          - linux/amd64
+          - linux/amd64,linux/arm64
+      tag_latest:
+        description: Also tag as "latest" (only meaningful for main)
+        type: boolean
+        default: false
+      run_tests:
+        description: Run tests before building
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Test
+    if: inputs.run_tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  build:
+    name: Build and push
+    runs-on: ubuntu-latest
+    needs: [test]
+    # Runs even when tests were skipped by the input, but not if they ran and failed.
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'skipped')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        if: contains(inputs.platforms, 'arm64')
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Derive tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Every build gets a branch tag and an immutable sha tag. Pin
+          # deployments to the sha; the branch tag moves.
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,format=long,prefix=sha-
+            type=raw,value=latest,enable=${{ inputs.tag_latest }}
+          labels: |
+            org.opencontainers.image.title=Pocket Network Faucet
+            org.opencontainers.image.description=Faucet for Pocket Network, serving every chain defined in chains.json
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: ${{ inputs.platforms }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          {
+            echo "### Image published"
+            echo
+            echo "Built from \`${{ github.ref_name }}\` (\`${{ github.sha }}\`)"
+            echo
+            echo "Tags:"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo "Digest: \`${{ steps.push.outputs.digest }}\`"
+            echo
+            echo "Pin the deployment to the digest or the \`sha-\` tag; branch tags move."
+          } >> "$GITHUB_STEP_SUMMARY"

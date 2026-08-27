@@ -163,6 +163,36 @@ point `chainsFile` at a different file for the other environments.
 
 Open `.env` with your editor of choice to modify the file if necessary.
 
+## Building the image
+
+Images are published to the GitHub Container Registry by the **Build and publish
+image** workflow, which is triggered by hand from the Actions tab. Pick the
+branch you want in the "Use workflow from" dropdown, so a branch build can be
+deployed to beta while `main` stays untouched.
+
+Every build is tagged with the branch name and with an immutable
+`sha-<commit>` tag:
+
+```
+ghcr.io/pokt-network/pocket-poktroll-faucet:<branch>
+ghcr.io/pokt-network/pocket-poktroll-faucet:sha-<commit>
+```
+
+Pin deployments to the `sha-` tag or the digest. Branch tags move, so a rollout
+referencing one is not reproducible.
+
+The workflow builds `linux/amd64` by default; select the multi-arch option if
+the cluster runs arm64 nodes. Tests run first unless disabled, and "latest" is
+only applied when explicitly requested.
+
+Note the package is private on first publish. Make it public under the
+repository's Packages settings, or give the cluster an `imagePullSecret`,
+otherwise the pull fails with an authentication error.
+
+A separate **CI** workflow runs the tests, a high-severity dependency audit, a
+`chains.json` sanity check and a Docker build on every push and pull request. It
+publishes nothing.
+
 ## Operating the Node
 
 ### Start

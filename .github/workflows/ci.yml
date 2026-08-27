@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      # Fails the build on a known vulnerability. The tree is currently clean,
+      # so this is a ratchet rather than a wish.
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Check chains.json is valid and ids are unique
+        run: |
+          node -e "
+            const chains = JSON.parse(require('fs').readFileSync('chains.json', 'utf8'));
+            if (!Array.isArray(chains) || chains.length === 0) throw new Error('chains.json must be a non-empty array');
+            const ids = chains.map(c => c.id);
+            const dup = ids.find((id, i) => ids.indexOf(id) !== i);
+            if (dup) throw new Error('duplicate chain id: ' + dup);
+            for (const c of chains) {
+              for (const k of ['id','chainId','rpcEndpoint','apiEndpoint','txDenom','txAmount','bech32Prefix']) {
+                if (!c[k]) throw new Error(c.id + ' is missing ' + k);
+              }
+              // The balance gate needs the REST host. Pointing it at the RPC host
+              // is the misconfiguration that silently disabled the check before.
+              if (c.apiEndpoint === c.rpcEndpoint) throw new Error(c.id + ': apiEndpoint must differ from rpcEndpoint');
+            }
+            console.log(chains.length + ' chains OK: ' + ids.join(', '));
+          "
+
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      # Proves the Dockerfile still builds. Publishing is a separate,
+      # manually triggered workflow.
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
