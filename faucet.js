@@ -42,7 +42,9 @@ app.get('/config.json', async (req, res) => {
     console.log('address:', chainConf.name, firstAccount.address)
   }
 
-  const project = conf.project
+  // Built fresh per request. This used to mutate conf.project in place, which
+  // accumulated derived state on the shared config object.
+  const project = {}
   project.sample = sample
   project.blockchains = conf.blockchains.map(x => x.name)
   // Everything the page renders is per chain, because one deployment now

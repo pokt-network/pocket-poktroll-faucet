@@ -487,7 +487,7 @@
   <div id="app">
     <header>
       <div class="d-flex align-items-center">
-        <img id="logo" src="logo1.png" :alt="`${testnet} Faucet`">
+        <img id="logo" src="logo1.png" :alt="logoAlt">
         <div class="pill" :style="`display: ${!selected.isBeta ? 'none' : ''}`">beta</div>
       </div>
       <nav>
@@ -642,16 +642,11 @@
     createApp({
       data() {
         return {
-          message: '',
-          testnet: 'Ping Testnet',
-          logo: 'https://assets-global.website-files.com/651fe0a9a906d151784935f8/65834aed8fd922fc4829817f_Logo-wordm-white.svg',
-          deployer: '',
           address: '',
           chain: '',
           chains: [],
           conf: {},
           balance: {},
-          ethAddr: '0xxxx',
           path: window.location.pathname,
           isProcessing: false,
           bannerImage: 'img.png',
@@ -726,9 +721,15 @@
         // keeps the first render safe while config.json is still in flight.
         selected() {
           return this.chains.find(c => c.id === this.chain) || {
-            chainType: '', tokenName: '', txAmount: '',
+            label: '', chainType: '', tokenName: '', txAmount: '',
             limitAddress: '', limitHours: '', isBeta: false, oneTimeOnly: false,
           }
+        },
+        // Names the network on screen, so the logo does not describe the page
+        // as something it is not. Falls back to the unqualified name while
+        // config.json is still loading.
+        logoAlt() {
+          return this.selected.label ? `Pocket ${this.selected.label} Faucet` : 'Pocket Faucet'
         },
         placeholder() {
           if (this.conf.sample) {

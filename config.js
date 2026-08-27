@@ -46,12 +46,6 @@ export default {
     db: {
         path: `${HOME}/history.db` // save request states
     },
-    project: {
-        name: "Get Pocket Tokens",
-        longName: 'Pocket Faucet',
-        logo: "https://assets-global.website-files.com/651fe0a9a906d151784935f8/65834aed8fd922fc4829817f_Logo-wordm-white.svg",
-        deployer: `<a href="https://faucet.pocket.network">Pocket Faucet</a>`
-    },
     blockchains: defined.map(c => ({
         // `name` is the route key and the rate-limit namespace. It is the
         // deployment id, not the chain id, because beta serves two tokens off
