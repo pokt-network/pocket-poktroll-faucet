@@ -2,11 +2,17 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 
 import { isValidAddress } from "./address.js";
+import { createSerializer } from "./serialize.js";
+import { classifyFailure } from "./failures.js";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { SigningStargateClient } from "@cosmjs/stargate";
 
 import conf from './config.js'
 import { FrequencyChecker } from './checker.js';
+import {
+  registry, sendsTotal, rejectionsTotal, broadcastSeconds,
+  walletBalance, walletBalanceSeconds, rpcHealthy, dbOpen,
+} from './metrics.js';
 
 // load config
 console.log("loaded config: ", conf)
@@ -28,18 +34,34 @@ app.use(express.static(fileURLToPath(new URL('public', import.meta.url))));
 
 const checker = new FrequencyChecker(conf)
 
+// Liveness: the process is up and the event loop is turning. Deliberately does
+// no crypto and touches no chain, so a chain outage never restarts the pod.
+app.get('/healthz', (req, res) => {
+  res.type('text/plain').send('ok');
+})
+
+// Readiness: distinct from liveness on purpose. The rate-limit database takes
+// an exclusive lock, so a pod that lost it must stop receiving traffic rather
+// than serve requests it cannot meter.
+app.get('/readyz', (req, res) => {
+  const open = checker.isOpen();
+  dbOpen.set(open ? 1 : 0);
+  if (!open) {
+    return res.status(503).type('text/plain').send('rate-limit database is not open');
+  }
+  res.type('text/plain').send('ready');
+})
+
 app.get('/', (req, res) => {
   res.render('index', conf);
 })
 
 app.get('/config.json', async (req, res) => {
   const sample = {}
-  for(let i =0; i < conf.blockchains.length; i++) {
-    const chainConf = conf.blockchains[i]
-    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(chainConf.sender.mnemonic, chainConf.sender.option);
-    const [firstAccount] = await wallet.getAccounts();
-    sample[chainConf.name] = firstAccount.address
-    console.log('address:', chainConf.name, firstAccount.address)
+  for (const chainConf of conf.blockchains) {
+    // Cached, so this no longer runs BIP39 key stretching on every request.
+    const { address } = await walletFor(chainConf)
+    sample[chainConf.name] = address
   }
 
   // Built fresh per request. This used to mutate conf.project in place, which
@@ -69,31 +91,16 @@ app.get('/config.json', async (req, res) => {
   res.send(project);
 })
 
-app.get('/balance/:chain', async (req, res) => {
-  const { chain }= req.params
-
-  let balance = {}
-
-  try{
-    const chainConf = conf.blockchains.find(x => x.name === chain)
-    if(chainConf) {
-      const rpcEndpoint = chainConf.endpoint.rpc_endpoint;
-      const wallet = await DirectSecp256k1HdWallet.fromMnemonic(chainConf.sender.mnemonic, chainConf.sender.option);
-      const client = await SigningStargateClient.connectWithSigner(rpcEndpoint, wallet);
-      const [firstAccount] = await wallet.getAccounts();
-      await client.getBalance(firstAccount.address, chainConf.tx.amount[0].denom).then(x => {
-        balance = x
-      }).catch(e => console.error(e));
-    }
-  } catch(err) {
-    console.log(err)
-  }
-  res.send(balance);
-})
 app.get('/send/:chain/:address', async (req, res) => {
   const {chain, address} = req.params;
   const ip = req.ip;
-  console.log('request tokens to ', address, ip);
+  // Logged so the trust proxy setting can be verified against the real ingress:
+  // xff should contain exactly `trust proxy` entries, and ip should be the
+  // client's real address. See the trustProxy note in the README.
+  console.log('request tokens to', address,
+    '| ip=' + ip,
+    '| xff=' + JSON.stringify(req.headers['x-forwarded-for'] ?? null),
+    '| trustProxy=' + app.get('trust proxy'));
 
   if (!chain || !address) {
     return res.send({ result: 'chain and address are required' });
@@ -109,12 +116,14 @@ app.get('/send/:chain/:address', async (req, res) => {
     // check lets a typo through to be signed and broadcast, where the chain
     // rejects it with an invalid-address error and the fee is spent anyway.
     if (!isValidAddress(address, chainConf.sender.option.prefix)) {
+      rejectionsTotal.inc({ chain, rule: 'invalid_address' });
       return res.send({ result: `Address [${address}] is not a valid ${chainConf.sender.option.prefix} address.` });
     }
 
     const isHealthy = await checkRpcHealth(chainConf.endpoint.rpc_endpoint);
 
     if(!isHealthy){
+      rejectionsTotal.inc({ chain, rule: 'rpc_unhealthy' });
       return res.status(503).send({result: "RPC endpoint for pocket appears to be unreachable"})
     }
 
@@ -122,11 +131,13 @@ app.get('/send/:chain/:address', async (req, res) => {
     // burst of concurrent requests cannot slip past between check and record.
     const addressOk = await checker.checkAddress(address, chain);
     if (!addressOk) {
+      rejectionsTotal.inc({ chain, rule: 'address_quota' });
       return res.send({ result: { code: 1, message: "This address has reached its request limit. Please try again later." } });
     }
 
     const ipOk = await checker.checkIp(ip, chain);
     if (!ipOk) {
+      rejectionsTotal.inc({ chain, rule: 'ip_quota' });
       await checker.refund(checker.addressKey(address, chain));
       return res.send({ result: { code: 1, message: "Too many requests from this network. Please try again later." } });
     }
@@ -172,6 +183,7 @@ app.get('/send/:chain/:address', async (req, res) => {
     // The quota stays consumed here on purpose: refunding it would let a
     // funded address hammer the balance endpoint for free.
     if (alreadyFunded) {
+      rejectionsTotal.inc({ chain, rule: 'already_initialized' });
       return res.send({
         result: {
           code: 1,
@@ -223,7 +235,7 @@ async function checkRpcHealth(endpoint) {
       return false;
     }
     
-    const data = await response.json();
+    await response.json();
     return true;
   } catch (error) {
     console.error(`RPC health check failed: ${error.message}`);
@@ -232,32 +244,114 @@ async function checkRpcHealth(endpoint) {
 }
 
 // Add RPC health check to app startup
-app.listen(conf.port, async () => {
-  console.log(`Faucet app listening on port ${conf.port}`);
-  
-  // Check RPC endpoints health on startup
+// How often the sender balances are refreshed. Polled on a timer rather than on
+// scrape so a slow or unreachable REST host cannot stall Prometheus.
+const BALANCE_REFRESH_MS = Number(process.env.balanceRefreshMs ?? 60000);
+
+async function refreshBalances() {
   for (const chainConf of conf.blockchains) {
-    const isHealthy = await checkRpcHealth(chainConf.endpoint.rpc_endpoint);
-    console.log(`RPC endpoint for ${chainConf.name}: ${isHealthy ? 'HEALTHY' : 'UNHEALTHY'}`);
-    
-    if (!isHealthy) {
-      console.warn(`Warning: RPC endpoint for ${chainConf.name} appears to be unreachable.`);
-      console.warn(`Please check your network connection or try an alternative endpoint.`);
+    try {
+      const { address } = await walletFor(chainConf);
+      const url = `${chainConf.endpoint.api_endpoint}/cosmos/bank/v1beta1/balances/${address}`;
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok) throw new Error(`status ${response.status}`);
+      const { balances = [] } = await response.json();
+
+      // Report the token being handed out and the gas denom, even at zero, so
+      // an empty faucet is a visible 0 rather than an absent series.
+      const denoms = new Set([
+        chainConf.tx.amount[0].denom,
+        chainConf.tx.fee?.[0]?.denom,
+      ].filter(Boolean));
+      for (const denom of denoms) {
+        const found = balances.find(b => b.denom === denom);
+        walletBalance.set({ chain: chainConf.name, denom }, Number(found?.amount ?? 0));
+      }
+      walletBalanceSeconds.set({ chain: chainConf.name }, Date.now() / 1000);
+    } catch (err) {
+      // Leave the previous value in place; the staleness gauge shows the gap.
+      console.warn(`Balance refresh failed for ${chainConf.name}:`, err.message);
     }
   }
+}
+
+async function refreshRpcHealth() {
+  for (const chainConf of conf.blockchains) {
+    const healthy = await checkRpcHealth(chainConf.endpoint.rpc_endpoint);
+    rpcHealthy.set({ chain: chainConf.name }, healthy ? 1 : 0);
+    if (!healthy) {
+      console.warn(`RPC endpoint for ${chainConf.name} appears to be unreachable.`);
+    }
+  }
+}
+
+app.listen(conf.port, async () => {
+  console.log(`Faucet app listening on port ${conf.port}`);
+
+  for (const chainConf of conf.blockchains) {
+    const { address } = await walletFor(chainConf);
+    console.log(`  ${chainConf.name}: sender ${address} on ${chainConf.chainId}`);
+  }
+
+  await refreshRpcHealth();
+  await refreshBalances();
+
+  // unref so a pending timer never holds the process open during shutdown.
+  setInterval(() => { refreshBalances().catch(() => {}) }, BALANCE_REFRESH_MS).unref();
+  setInterval(() => { refreshRpcHealth().catch(() => {}) }, BALANCE_REFRESH_MS).unref();
 });
+
+// Metrics live on their own listener so /metrics is never routable through the
+// public ingress. Scrape this port directly from the ServiceMonitor.
+const metricsApp = express();
+metricsApp.get('/metrics', async (req, res) => {
+  try {
+    dbOpen.set(checker.isOpen() ? 1 : 0);
+    res.set('Content-Type', registry.contentType);
+    res.end(await registry.metrics());
+  } catch (err) {
+    res.status(500).end(err.message);
+  }
+});
+metricsApp.get('/healthz', (req, res) => res.type('text/plain').send('ok'));
+metricsApp.listen(conf.metricsPort, () => {
+  console.log(`Metrics listening on port ${conf.metricsPort}`);
+});
+
+// Deriving a wallet runs BIP39's key stretching, which is slow, and the result
+// never changes. Cached per chain.
+const walletCache = new Map()
+async function walletFor(chainConf) {
+  if (!walletCache.has(chainConf.name)) {
+    walletCache.set(chainConf.name, (async () => {
+      const wallet = await DirectSecp256k1HdWallet.fromMnemonic(chainConf.sender.mnemonic, chainConf.sender.option)
+      const [account] = await wallet.getAccounts()
+      return { wallet, address: account.address }
+    })())
+  }
+  return walletCache.get(chainConf.name)
+}
+
+// Broadcasts from one account must not overlap. cosmjs reads the account's
+// sequence number immediately before signing, so two concurrent sends read the
+// same value and the second is rejected as a sequence mismatch. Pinning the
+// deployment to one replica does not help: the race is between requests inside
+// a single process.
+//
+// Keyed by account and chain rather than by configuration entry, because two
+// entries may share a mnemonic and therefore the same on-chain account.
+const serializeSend = createSerializer()
 
 async function sendCosmosTx(recipient, chain) {
   const chainConf = conf.blockchains.find(x => x.name === chain) 
   if(chainConf) {
+    const { wallet, address: sender } = await walletFor(chainConf);
+    const rpcEndpoint = chainConf.endpoint.rpc_endpoint;
+
     try {
-      const wallet = await DirectSecp256k1HdWallet.fromMnemonic(
-        chainConf.sender.mnemonic, 
-        chainConf.sender.option
-      );
-      const [firstAccount] = await wallet.getAccounts();
-      const rpcEndpoint = chainConf.endpoint.rpc_endpoint;
-      
       console.log(`Attempting to connect to RPC endpoint: ${rpcEndpoint}`);
       
       // Format the amount properly
@@ -289,7 +383,7 @@ async function sendCosmosTx(recipient, chain) {
 
       // Send tokens with proper error handling
       const result = await client.sendTokens(
-        firstAccount.address,
+        sender,
         recipient,
         amount,
         fee,
@@ -333,5 +427,28 @@ async function sendCosmosTx(recipient, chain) {
 }
 
 function sendTx(recipient, chain) {
-  return sendCosmosTx(recipient, chain)
+  const chainConf = conf.blockchains.find(x => x.name === chain)
+  if (!chainConf) throw new Error(`Blockchain Config [${chain}] not found`)
+
+  // One broadcast at a time per account, so signing never races on the
+  // sequence number. walletFor is cached, so this resolves immediately after
+  // the first call.
+  return walletFor(chainConf).then(({ address: sender }) =>
+    serializeSend(`${chainConf.chainId}:${sender}`, async () => {
+      const stop = broadcastSeconds.startTimer({ chain })
+      try {
+        const result = await sendCosmosTx(recipient, chain)
+        const outcome = result?.code === 0 ? 'success' : 'pending'
+        stop({ outcome })
+        sendsTotal.inc({ chain, outcome, reason: '' })
+        return result
+      } catch (err) {
+        stop({ outcome: 'failure' })
+        sendsTotal.inc({ chain, outcome: 'failure', reason: classifyFailure(err) })
+        throw err
+      }
+    })
+  )
 }
+
+

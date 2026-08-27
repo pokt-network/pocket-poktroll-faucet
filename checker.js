@@ -80,6 +80,13 @@ export class FrequencyChecker {
     ipKey(ip, chain) { return `ip:${chain}:${ip}` }
     addressKey(address, chain) { return `addr:${chain}:${address}` }
 
+    // Readiness signal. The database takes an exclusive lock, so a second
+    // process on the same volume never reaches 'open', and a pod that cannot
+    // record quota must not receive traffic.
+    isOpen() {
+        return this.db.status === 'open'
+    }
+
     async close() {
         await this.queue
         await this.db.close()

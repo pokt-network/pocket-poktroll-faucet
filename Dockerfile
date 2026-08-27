@@ -13,14 +13,19 @@ RUN npm ci --omit=dev
 # Copy the rest of the application code to the working directory
 COPY . .
 
-# Change ownership of the working directory to the 'node' user
+# The rate-limit database lives here. Creating it in the image means a fresh
+# Docker volume inherits this ownership instead of defaulting to root. A
+# Kubernetes PVC does not inherit it, so the pod still needs fsGroup: 1000.
+RUN mkdir -p .faucet
+
+# Change ownership of the working directory to the 'node' user (uid 1000)
 RUN chown -R node:node .
 
 # Switch to the 'node' user
 USER node
 
-# Expose the port your app runs on
-EXPOSE 8088
+# Application port and the separate metrics port
+EXPOSE 8088 9464
 
 # Command to run your application
 CMD ["node", "faucet.js"]

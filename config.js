@@ -1,17 +1,10 @@
-import { Bip39, Random, stringToPath } from '@cosmjs/crypto'
+import { stringToPath } from '@cosmjs/crypto'
 import fs from 'fs'
 import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv';
 dotenv.config();
 
 const HOME = ".faucet";
-const mnemonic_path = `${HOME}/mnemonic.txt`;
-
-if (!fs.existsSync(mnemonic_path)) {
-    fs.mkdirSync(HOME, { recursive: true });
-    // 32 bytes of entropy, same as before, so this still yields 24 words.
-    fs.writeFileSync(mnemonic_path, Bip39.encode(Random.getBytes(32)).toString());
-}
 
 // Chain definitions carry no secrets, so they live in a file rather than in the
 // environment. Point chainsFile elsewhere to mount a different set.
@@ -33,16 +26,28 @@ if (duplicate) {
 }
 
 // Each chain may name its own mnemonic variable, so mainnet and beta can hold
-// separate keys. Falls back to a shared `mnemonic`, then to the generated one.
-const generated = fs.readFileSync(mnemonic_path, 'utf8').trim();
+// separate keys, falling back to a shared `mnemonic`.
+//
+// A missing key is fatal. This used to generate a random mnemonic and write it
+// to disk, which meant a misconfigured deployment started successfully with an
+// empty wallet and failed only once someone asked it for tokens. A process that
+// refuses to start is far easier to diagnose than one that looks healthy and
+// cannot pay.
 function mnemonicFor(chain) {
-    return (chain.mnemonicEnv && process.env[chain.mnemonicEnv])
-        || process.env.mnemonic
-        || generated;
+    const mnemonic = (chain.mnemonicEnv && process.env[chain.mnemonicEnv]) || process.env.mnemonic;
+    if (!mnemonic || !mnemonic.trim()) {
+        const named = chain.mnemonicEnv ? `${chain.mnemonicEnv} or ` : '';
+        throw new Error(
+            `No mnemonic for chain "${chain.id}". Set ${named}mnemonic in the environment.`
+        );
+    }
+    return mnemonic.trim();
 }
 
 export default {
     port: Number(process.env.port ?? 8088),
+    // Separate listener so /metrics is not routable through the public ingress.
+    metricsPort: Number(process.env.metricsPort ?? 9464),
     db: {
         path: `${HOME}/history.db` // save request states
     },

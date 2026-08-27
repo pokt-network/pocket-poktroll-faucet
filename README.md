@@ -163,6 +163,48 @@ point `chainsFile` at a different file for the other environments.
 
 Open `.env` with your editor of choice to modify the file if necessary.
 
+## Operations
+
+| Endpoint | Port | Purpose |
+| --- | --- | --- |
+| `/healthz` | 8088 | Liveness. No crypto, no chain calls, so a chain outage never restarts the pod |
+| `/readyz` | 8088 | Readiness. Returns 503 while the rate-limit database is not open |
+| `/metrics` | 9464 | Prometheus. A separate listener, so it is not routable through the public ingress |
+
+Liveness and readiness are deliberately different checks. The rate-limit
+database takes an exclusive lock, so a pod that cannot open it must stop
+receiving traffic rather than serve requests it cannot meter. In that state
+`/send` fails closed and no tokens are sent.
+
+Metrics worth alerting on:
+
+- `faucet_wallet_balance{chain,denom}` — an empty faucet fails every request
+  while looking healthy everywhere else. Gas runs out long before the
+  distributed token does
+- `faucet_wallet_balance_updated_seconds{chain}` — staleness, so a silently
+  failing refresh is visible
+- `faucet_sends_total{chain,outcome,reason}` and
+  `faucet_rejections_total{chain,rule}`
+- `faucet_broadcast_duration_seconds{chain,outcome}`
+- `faucet_rpc_healthy{chain}` and `faucet_ratelimit_db_open`
+
+### Running under Kubernetes
+
+- `replicas: 1`, and `strategy: Recreate` rather than `RollingUpdate`. The
+  rate-limit database takes an exclusive file lock, so a second pod crashloops
+  rather than degrading, and a rolling update starts the new pod before the old
+  one exits
+- A PersistentVolumeClaim for `/usr/src/app/.faucet`. Without it every restart
+  resets all quotas, which silently drops the once-per-address guarantee
+- `fsGroup: 1000`. The image runs as uid 1000, and a PVC does not inherit the
+  image's directory ownership. Without it the database cannot open, `/readyz`
+  reports 503 and every request fails closed
+- `readOnlyRootFilesystem: true` works. Nothing outside `.faucet` is written
+- Set `trustProxy` to the number of proxies that append to `X-Forwarded-For`.
+  Too low and a caller spoofs the header for unlimited quota; too high and every
+  client shares one bucket. Each `/send` logs the raw header and the resolved
+  IP so the value can be checked against a real request
+
 ## Building the image
 
 Images are published to the GitHub Container Registry by the **Build and publish
