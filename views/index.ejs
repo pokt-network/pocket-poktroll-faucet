@@ -133,7 +133,10 @@
 
     /* ---- chips: the explorer's network picker ---- */
     .chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:18px }
-    .chip { padding:6px 14px; border-radius:9999px; font-size:.8rem; font-weight:500; background:var(--bg-surface); color:var(--text-secondary); border:1px solid var(--border); transition:all .15s ease; cursor:pointer; font-family:inherit }
+    /* Rounded rectangle, not a pill. The explorer's own .chip is fully rounded,
+       but the house style is a rounded rectangle, and 10px is the radius its
+       interactive controls use, matching the input and send button alongside. */
+    .chip { padding:7px 14px; border-radius:10px; font-size:.8rem; font-weight:500; background:var(--bg-surface); color:var(--text-secondary); border:1px solid var(--border); transition:all .15s ease; cursor:pointer; font-family:inherit }
     .chip:hover { border-color:var(--border-hover); color:var(--text-primary) }
     .chip.active { background:var(--blue); color:#fff; border-color:var(--blue) }
     .chip:focus-visible, .btn-primary:focus-visible, .iconbtn:focus-visible, .copybtn:focus-visible,
