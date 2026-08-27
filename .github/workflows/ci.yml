@@ -58,6 +58,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Required for the GitHub Actions cache backend. Without it the build
+      # falls back to the docker driver, which cannot export a cache.
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
       # Proves the Dockerfile still builds. Publishing is a separate,
       # manually triggered workflow.
       - name: Build image (no push)
