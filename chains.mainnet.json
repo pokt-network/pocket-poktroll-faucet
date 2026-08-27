@@ -1,0 +1,24 @@
+[
+  {
+    "id": "mainnet-mact",
+    "label": "Mainnet",
+    "chainId": "pocket",
+    "chainType": "MAINNET",
+    "tokenName": "MACT",
+    "rpcEndpoint": "https://sauron-rpc.infra.pocket.network",
+    "apiEndpoint": "https://sauron-api.infra.pocket.network",
+    "bech32Prefix": "pokt",
+    "txDenom": "mact",
+    "txAmount": "1",
+    "tokenDecimals": 0,
+    "txFeeDenom": "upokt",
+    "txFeeAmount": "200",
+    "txGasLimit": "200000",
+    "txTimeout": 90000,
+    "initDenom": "mact",
+    "limitAddress": 1,
+    "limitIp": 5,
+    "limitHours": 24,
+    "mnemonicEnv": "MNEMONIC_MAINNET_MACT"
+  }
+]
