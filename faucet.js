@@ -34,6 +34,9 @@ app.use(express.static(fileURLToPath(new URL('public', import.meta.url))));
 
 const checker = new FrequencyChecker(conf)
 
+// Declared before the routes that read it; set in the shutdown handler below.
+var shuttingDown = false;
+
 // Liveness: the process is up and the event loop is turning. Deliberately does
 // no crypto and touches no chain, so a chain outage never restarts the pod.
 app.get('/healthz', (req, res) => {
@@ -46,6 +49,9 @@ app.get('/healthz', (req, res) => {
 app.get('/readyz', (req, res) => {
   const open = checker.isOpen();
   dbOpen.set(open ? 1 : 0);
+  if (shuttingDown) {
+    return res.status(503).type('text/plain').send('shutting down');
+  }
   if (!open) {
     return res.status(503).type('text/plain').send('rate-limit database is not open');
   }
@@ -292,7 +298,7 @@ async function refreshRpcHealth() {
   }
 }
 
-app.listen(conf.port, async () => {
+const server = app.listen(conf.port, async () => {
   console.log(`Faucet app listening on port ${conf.port}`);
 
   for (const chainConf of conf.blockchains) {
@@ -321,9 +327,50 @@ metricsApp.get('/metrics', async (req, res) => {
   }
 });
 metricsApp.get('/healthz', (req, res) => res.type('text/plain').send('ok'));
-metricsApp.listen(conf.metricsPort, () => {
+const metricsServer = metricsApp.listen(conf.metricsPort, () => {
   console.log(`Metrics listening on port ${conf.metricsPort}`);
 });
+
+// A broadcast can take as long as txTimeout, and requests queue behind one
+// another. Killing the process mid-send leaves the quota consumed and the user
+// with no answer, while the transaction may still land. So: stop reporting
+// ready, let in-flight work finish, then close the database cleanly.
+//
+// The deployment's terminationGracePeriodSeconds must exceed DRAIN_MS plus the
+// longest send, or Kubernetes SIGKILLs before this can finish.
+const DRAIN_MS = Number(process.env.drainMs ?? 5000);
+
+async function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`${signal} received; draining.`);
+
+  // Fail readiness first and give the endpoints controller time to notice,
+  // so no new request is routed here while the listener is still open.
+  await new Promise(r => setTimeout(r, DRAIN_MS));
+
+  await new Promise(resolve => server.close(resolve));
+  server.closeIdleConnections?.();
+  console.log('HTTP listener closed; waiting for in-flight sends.');
+
+  try {
+    await checker.close();
+    console.log('Rate-limit database closed cleanly.');
+  } catch (err) {
+    console.error('Error closing the rate-limit database:', err.message);
+  }
+
+  await new Promise(resolve => metricsServer.close(resolve));
+  console.log('Shutdown complete.');
+  process.exit(0);
+}
+
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  process.on(signal, () => { shutdown(signal).catch(err => {
+    console.error('Shutdown failed:', err);
+    process.exit(1);
+  }) });
+}
 
 // Deriving a wallet runs BIP39's key stretching, which is slow, and the result
 // never changes. Cached per chain.
