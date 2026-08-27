@@ -59,7 +59,19 @@ app.get('/readyz', (req, res) => {
 })
 
 app.get('/', (req, res) => {
-  res.render('index', conf);
+  // Social previews are rendered by crawlers that do not execute JavaScript, so
+  // the network and token names in the meta tags have to come from the server.
+  // The absolute URL is derived from the request, which is correct behind the
+  // proxy because trust proxy is set.
+  const tokens = [...new Set(conf.blockchains.map(c => c.tokenName))];
+  res.render('index', {
+    ...conf,
+    publicUrl: `${req.protocol}://${req.get('host')}`,
+    networkLabel: conf.blockchains[0]?.label ?? 'Network',
+    tokenSummary: tokens.length > 1
+      ? tokens.slice(0, -1).join(', ') + ' and ' + tokens[tokens.length - 1]
+      : (tokens[0] ?? 'tokens'),
+  });
 })
 
 app.get('/config.json', async (req, res) => {

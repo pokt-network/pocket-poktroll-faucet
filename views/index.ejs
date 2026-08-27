@@ -11,9 +11,26 @@
     } catch (e) {}
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Faucet - Pocket Network</title>
+  <title>Pocket <%= networkLabel %> Faucet</title>
   <meta name="robots" content="index, follow">
-  <meta name="description" content="Uniform Faucet Tool For Poktroll">
+  <meta name="description" content="Claim <%= tokenSummary %> to initialize your Shannon account on Pocket Network <%= networkLabel %>.">
+  <meta name="theme-color" content="#171c1f">
+
+  <!-- Social preview. Rendered server-side because crawlers do not run JS. -->
+  <meta property="og:site_name" content="Pocket Network">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Pocket <%= networkLabel %> Faucet">
+  <meta property="og:description" content="Claim <%= tokenSummary %> to initialize your Shannon account on Pocket Network <%= networkLabel %>.">
+  <meta property="og:url" content="<%= publicUrl %>/">
+  <meta property="og:image" content="<%= publicUrl %>/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Pocket Network Faucet">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pocket <%= networkLabel %> Faucet">
+  <meta name="twitter:description" content="Claim <%= tokenSummary %> to initialize your Shannon account on Pocket Network <%= networkLabel %>.">
+  <meta name="twitter:image" content="<%= publicUrl %>/og-image.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -253,7 +270,7 @@
       <main>
         <div class="hero">
           <h1>Pocket <span class="accent">{{ selected.label || 'Network' }}</span> Faucet</h1>
-          <p>Get free {{ selected.tokenName }} to initialize your Shannon account.</p>
+          <p>Claim {{ selected.tokenName }} to initialize your Shannon account.</p>
         </div>
 
         <div class="card faucet-card" :class="{ 'is-error': showError, 'is-success': showSuccess, 'is-pending': showPending }">
