@@ -10,12 +10,29 @@ The Testnet Faucet is a web tool that allows users to obtain POKT for free on ou
 ## Prerequisites
 
 1. **Docker**: Ensure Docker is installed and running on your system.
-2. **Environment Variables**: An `.env` file with the following **required** variables:
-   - `mnemonic`
-   - `rpcEndpoint`
-   - `txAmount`
-   - `txFeeAmount`
-   - `txGasLimit`
+2. **Environment Variables**: An `.env` file holding the wallet mnemonics. See
+   `.env.example`. Each network defined in `chains.json` names the variable that
+   holds its own mnemonic, so mainnet and beta can use separate keys.
+3. **Chain definitions**: `chains.json` defines every network the deployment
+   serves. Each entry carries its own endpoints, token, amount and limits:
+   - `id:` Route key and rate-limit namespace. Must be unique
+   - `label:` Shown on the network picker
+   - `chainId:` The chain ID as reported by the node
+   - `chainType:` Shown in the page heading. `BETA` also shows the beta pill
+   - `tokenName:` Token name shown to users, such as `POKT` or `MACT`
+   - `rpcEndpoint:` CometBFT RPC endpoint, used to broadcast transactions
+   - `apiEndpoint:` Cosmos REST API endpoint, used for balance checks. This is a
+     different host from `rpcEndpoint`; the balance path does not exist on the RPC host
+   - `bech32Prefix:` Human-readable address prefix
+   - `txDenom:` Denomination sent to users (smallest unit)
+   - `txAmount:` Amount in the smallest denomination
+   - `tokenDecimals:` Decimal places between `txDenom` and `tokenName`. `6` turns
+     upokt into POKT; `0` for a denom with no sub-unit, such as mact
+   - `txFeeDenom:`, `txFeeAmount:`, `txGasLimit:`, `txTimeout:` Transaction settings
+   - `initDenom:` Denom that marks an account as already initialized. When set,
+     each address is served only once. Leave empty for a repeat-use faucet
+   - `limitAddress:`, `limitIp:`, `limitHours:` Rate-limiting window and counts
+   - `mnemonicEnv:` Name of the `.env` variable holding this network's mnemonic
 
 **Note**: Make sure each variable is properly set with appropriate values in the `.env` file.
 
@@ -121,13 +138,23 @@ git clone https://github.com/pokt-network/pocket-poktroll-faucet.git
 cd pocket-poktroll-faucet
 ```
 
-## Copy .env.example to .env
+## Configure
 
-Make a copy of `.env.example` named `.env`.
+Copy the example environment file and fill in the mnemonics:
 
 ```sh
 cp .env.example .env
 ```
+
+A single deployment serves every network listed in `chains.json`, and visitors
+pick one from the network selector on the page. Edit `chains.json` to add,
+remove or retune a network; no code change or extra deployment is needed.
+
+Because one process holds every configured wallet, give each network its own
+mnemonic variable rather than sharing one. That limits what a compromise of a
+single network reaches. If you need stronger isolation than that, run mainnet as
+its own deployment with a `chains.json` containing only the mainnet entry, and
+point `chainsFile` at a different file for the other environments.
 
 Open `.env` with your editor of choice to modify the file if necessary.
 
