@@ -32,10 +32,11 @@ jobs:
       - name: Audit dependencies
         run: npm audit --audit-level=high
 
-      - name: Check chains.json is valid and ids are unique
+      - name: Check every chains file is valid and ids are unique
         run: |
-          node -e "
-            const chains = JSON.parse(require('fs').readFileSync('chains.json', 'utf8'));
+          for f in chains*.json; do echo "--- $f ---"; CHAINS_FILE="$f" node -e "
+            const file = process.env.CHAINS_FILE;
+            const chains = JSON.parse(require('fs').readFileSync(file, 'utf8'));
             if (!Array.isArray(chains) || chains.length === 0) throw new Error('chains.json must be a non-empty array');
             const ids = chains.map(c => c.id);
             const dup = ids.find((id, i) => ids.indexOf(id) !== i);
@@ -48,8 +49,16 @@ jobs:
               // is the misconfiguration that silently disabled the check before.
               if (c.apiEndpoint === c.rpcEndpoint) throw new Error(c.id + ': apiEndpoint must differ from rpcEndpoint');
             }
-            console.log(chains.length + ' chains OK: ' + ids.join(', '));
-          "
+            for (const c of chains) {
+              // A wrong exponent here is a 10^n error in what the faucet pays out.
+              if (!Number.isInteger(Number(c.tokenDecimals))) throw new Error(c.id + ': tokenDecimals must be an integer');
+              if (!/^[0-9]+$/.test(String(c.txAmount))) throw new Error(c.id + ': txAmount must be an integer string in the smallest denomination');
+            }
+            console.log(chains.length + ' chains OK: ' + ids.map(i => {
+              const c = chains.find(x => x.id === i);
+              return i + ' (' + (Number(c.txAmount) / 10 ** Number(c.tokenDecimals)) + ' ' + c.tokenName + ')';
+            }).join(', '));
+          "; done
 
   build:
     name: Build image
