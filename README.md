@@ -1,11 +1,16 @@
 <div align="center">
-  <a href="https://www.pokt.network">
-    <img src=".github/faucet_image.png" alt="Shannon Testnet Faucet Image" width="850"/>
+  <a href="https://faucet.pocket.network">
+    <img src=".github/faucet_image.png" alt="The Pocket Network faucet, showing the network picker, address field and request details" width="850"/>
   </a>
-  <h1>Shannon Testnet Faucet</h1>
+  <h1>Pocket Network Faucet</h1>
 </div>
 
-The Testnet Faucet is a web tool that allows users to obtain POKT for free on our test platform. Users simply need to provide their address to instantly receive uPOKT..
+A web tool for claiming free tokens on Pocket Network. Enter an address, pick a
+network, and the faucet sends the tokens.
+
+One deployment serves every network defined in `chains.json`, and visitors choose
+between them on the page. As configured here that is mainnet MACT, beta MACT and
+beta POKT, each with its own endpoints, amount and limits.
 
 ## Prerequisites
 
